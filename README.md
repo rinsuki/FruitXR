@@ -29,7 +29,6 @@ at this time, only you can do is see Swapchain, so you probably don't want to ru
 
 A.
 
-* I don't want to mess around with C++ codebases if there are other way to do that
 * I think it would be good to avoid MoltenVK as long as application isn't requires it
   * (Monado's compositor uses Vulkan AFAIK)
 * I don't have a idea to how adopt macOS IPC/shared textures way to Monado's codebase
