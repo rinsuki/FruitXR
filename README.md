@@ -1,5 +1,7 @@
 # FruitXR
 
+![](https://files.rinsuki.net/2025/fruitxr-top.png)
+
 very Work-in-Progress PoC of the OpenXR Runtime for macOS.
 
 DISCLAIMER: This runtime is NOT OpenXR conformant.
