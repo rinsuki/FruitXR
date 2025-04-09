@@ -8,7 +8,7 @@ at this time, only you can do is see Swapchain, so you probably don't want to ru
 
 ## Features (already implemented)
 
-* Swapchain の内容のウィンドウでの確認
+* Swapchain の内容のウインドウでの確認
 * x86_64 プロセスで動く (w/ Rosetta 2)
   * FruitXR以前に公開されていたmacOS向けOpenXRランタイムはMetaの XR Simulator しかなく、これは arm64 バイナリしか用意されていなかったので、これまでOpenXRをx86_64のプロセスから使うことは不可能でした。
   * 実際の Intel Mac ではテストしていませんが、当時の性能を考えると、あまり使いたい人はいないでしょう (Mac Pro (2020) を持っているなら別かもしれませんが)。
