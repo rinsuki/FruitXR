@@ -31,13 +31,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func activateOpenXRRuntime() {
         let openXRRuntimeJSONPath = "/usr/local/share/openxr/1/active_runtime.json"
         let ourRuntimeJSONPath = Bundle.main.url(forResource: "openxr_manifest", withExtension: "json")!.path()
+        try? FileManager.default.createDirectory(atPath: "/usr/local/share/openxr/1", withIntermediateDirectories: true, attributes: nil)
         // read runtime json's destination of symlink
-        let destination = try! FileManager.default.destinationOfSymbolicLink(atPath: openXRRuntimeJSONPath)
-        if destination != ourRuntimeJSONPath {
-            // replace symlink to our runtime json
-            try! FileManager.default.removeItem(atPath: openXRRuntimeJSONPath)
-            try! FileManager.default.createSymbolicLink(atPath: openXRRuntimeJSONPath, withDestinationPath: ourRuntimeJSONPath)
+        let destination = try? FileManager.default.destinationOfSymbolicLink(atPath: openXRRuntimeJSONPath)
+        if let destination {
+            if destination != ourRuntimeJSONPath {
+                // replace symlink to our runtime json
+                try! FileManager.default.removeItem(atPath: openXRRuntimeJSONPath)
+            } else {
+                return
+            }
         }
+        try! FileManager.default.createSymbolicLink(atPath: openXRRuntimeJSONPath, withDestinationPath: ourRuntimeJSONPath)
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
