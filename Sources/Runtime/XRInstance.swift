@@ -133,10 +133,10 @@ class XRInstance {
         
         // TODO: STUB, we need to get real view properties from the server
         for i in 0..<2 {
-            views[i].recommendedImageRectWidth = 1024
-            views[i].recommendedImageRectHeight = 1024
-            views[i].maxImageRectWidth = 1024
-            views[i].maxImageRectHeight = 1024
+            views[i].recommendedImageRectWidth = 2064
+            views[i].recommendedImageRectHeight = 2240
+            views[i].maxImageRectWidth = 2064
+            views[i].maxImageRectHeight = 2240
             views[i].recommendedSwapchainSampleCount = 1
             views[i].maxSwapchainSampleCount = 1
         }

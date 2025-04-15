@@ -160,7 +160,12 @@ class XRSession {
             func convertDegreesToRadians(degree: Float) -> Float {
                 return degree * .pi / 180
             }
-            views[i].fov = .init(angleLeft: convertDegreesToRadians(degree: -45), angleRight: convertDegreesToRadians(degree: 45), angleUp: convertDegreesToRadians(degree: 45), angleDown: convertDegreesToRadians(degree: -45))
+            views[i].fov = .init(
+                angleLeft: convertDegreesToRadians(degree: i == 0 ? -54 : -40),
+                angleRight: convertDegreesToRadians(degree: i == 0 ? 40 : 54),
+                angleUp: convertDegreesToRadians(degree: 43.98),
+                angleDown: convertDegreesToRadians(degree: -54.27)
+            )
             views[i].pose.position = .init(x: 0, y: 0, z: 0)
             views[i].pose.orientation = .init(x: 0, y: 0, z: 0, w: 1)
         }
