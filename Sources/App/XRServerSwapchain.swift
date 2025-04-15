@@ -10,7 +10,7 @@ import IOSurface
 
 class XRServerSwapchain: NSObject {
     var surfaces: [IOSurface] = []
-    let window = NSWindow(contentRect: .init(origin: .zero, size: .init(width: 1024, height: 1024)), styleMask: .titled, backing: .buffered, defer: true)
+    let window = NSWindow(contentRect: .init(origin: .zero, size: .zero), styleMask: .titled, backing: .buffered, defer: true)
     let view = NSView()
 
     override init() {
@@ -23,6 +23,7 @@ class XRServerSwapchain: NSObject {
     
     @objc(addIOSurface:) func add(ioSurface: IOSurface) {
         surfaces.append(ioSurface)
+        window.setContentSize(.init(width: ioSurface.width, height: ioSurface.height))
     }
     
     @objc(switchSurfaceTo:) func switchSurface(to index: Int32) {

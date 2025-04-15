@@ -29,10 +29,9 @@ class XRSwapchain {
         case .metal(let commandQueue):
             for i in 0..<2 {
                 let ioSurface = IOSurface(properties: [
-                    .width: 1024,
-                    .height: 1024,
+                    .width: createInfo.width,
+                    .height: createInfo.height,
                     .bytesPerElement: 4,
-                    .bytesPerRow: 4096,
                     .pixelFormat: kCVPixelFormatType_32RGBA, // really?
                     .name: "test",
                 ])!
@@ -46,7 +45,7 @@ class XRSwapchain {
                 default:
                     fatalError() // TODO: return error properly
                 }
-                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: metalPixelFormat, width: 1024, height: 1024, mipmapped: false)
+                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: metalPixelFormat, width: ioSurface.width, height: ioSurface.height, mipmapped: false)
                 descriptor.usage = [
                     .renderTarget,
                 ]
