@@ -32,16 +32,21 @@ class XRSwapchain {
                     .width: createInfo.width,
                     .height: createInfo.height,
                     .bytesPerElement: 4,
-                    .pixelFormat: kCVPixelFormatType_32RGBA, // really?
+                    .pixelFormat: kCVPixelFormatType_32BGRA,
                     .name: "test",
                 ])!
                 ioSurfaces.append(ioSurface)
-                let metalPixelFormat = MTLPixelFormat(rawValue: .init(createInfo.format))!
+                var metalPixelFormat = MTLPixelFormat(rawValue: .init(createInfo.format))!
                 switch metalPixelFormat {
                 case .rgba8Unorm:
+                    print("WARNING: converting RGB to BGR")
+                    metalPixelFormat = .bgra8Unorm
                     break
                 case .rgba8Unorm_srgb:
+                    print("WARNING: converting RGB to BGR")
+                    metalPixelFormat = .bgra8Unorm_srgb
                     IOSurfaceSetValue(ioSurface, "IOSurfaceColorSpace" as CFString, CGColorSpace.sRGB)
+                    break
                 default:
                     fatalError() // TODO: return error properly
                 }

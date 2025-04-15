@@ -78,6 +78,8 @@ class XRSession {
         switch graphicsAPI {
         case .metal(_):
             let ourSupportedFormats: [MTLPixelFormat] = [
+                MTLPixelFormat.bgra8Unorm,
+                MTLPixelFormat.bgra8Unorm_srgb,
                 MTLPixelFormat.rgba8Unorm,
                 MTLPixelFormat.rgba8Unorm_srgb,
             ]
