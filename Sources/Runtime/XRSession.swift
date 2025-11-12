@@ -55,6 +55,11 @@ class XRSession {
         destroyed = true
     }
     
+    func end() -> XrResult {
+        print("TODO: end session")
+        return XR_SUCCESS
+    }
+    
     func enumerateReferenceSpaces(spaces: UnsafeMutableBufferPointer<XrReferenceSpaceType>, spaceCount: inout UInt32) -> XrResult {
         let ourSupportedSpaces = [
             XR_REFERENCE_SPACE_TYPE_LOCAL,
@@ -132,6 +137,14 @@ class XRSession {
         return XR_SUCCESS
     }
     
+    func getActionState(info: XrActionStateGetInfo, vector2f: inout XrActionStateVector2f) -> XrResult {
+        print("STUB: xrGetActionStateVector2f(\(self), \(info), \(vector2f))")
+        vector2f.isActive = .init(XR_FALSE)
+        vector2f.changedSinceLastSync = .init(XR_FALSE)
+        vector2f.currentState = .init(x: 0, y: 0)
+        return XR_SUCCESS
+    }
+    
     func waitFrame(waitInfo: XrFrameWaitInfo, frameState: inout XrFrameState) -> XrResult {
         print("STUB: xrWaitFrame(\(self), \(waitInfo), \(frameState))")
         usleep(1_000_000 / 120) // TODO: stub
@@ -146,6 +159,23 @@ class XRSession {
     
     func endFrame(frameEndInfo: XrFrameEndInfo) -> XrResult {
         print("STUB: xrEndFrame(\(self), \(frameEndInfo))")
+        for i in 0..<Int(frameEndInfo.layerCount) {
+            guard let layer = frameEndInfo.layers[i] else {
+                print("WARNING: layer[\(i)] is null")
+                return XR_ERROR_LAYER_INVALID
+            }
+            switch layer.pointee.type {
+            case XR_TYPE_COMPOSITION_LAYER_PROJECTION:
+                // TODO: cares about the space
+                layer.withMemoryRebound(to: XrCompositionLayerProjection.self, capacity: 1, { pointer in
+                    print(pointer.pointee)
+                })
+                break
+            default:
+                print("WARNING: layer \(layer.pointee.type) is not supported at this time")
+                return XR_ERROR_LAYER_INVALID
+            }
+        }
         return XR_SUCCESS
     }
     
@@ -172,6 +202,23 @@ class XRSession {
             views[i].pose.orientation = .init(x: 0, y: 0, z: 0, w: 1)
         }
         
+        return XR_SUCCESS
+    }
+    
+    func applyHapticFeedback(actionInfo: XrHapticActionInfo, feedback: XrHapticBaseHeader) -> XrResult {
+        print("STUB: xrApplyHapticFeedback(\(self), \(actionInfo), \(feedback))")
+        return XR_SUCCESS
+    }
+    
+    func getCurrentInteractionProfile(topLevelUserPath: XrPath, interactionProfile: inout XrInteractionProfileState) -> XrResult {
+        print("STUB: xrGetCurrentInteractionProfile(\(self), \(topLevelUserPath), \(interactionProfile))")
+        interactionProfile.interactionProfile = .init(XR_NULL_PATH)
+        return XR_SUCCESS
+    }
+    
+    func getReferenceSpaceBoundsRect(referenceSpaceType: XrReferenceSpaceType, boundsRect: inout XrExtent2Df) -> XrResult {
+        print("STUB: xrGetReferenceSpaceBoundsRect(\(self), \(referenceSpaceType), \(boundsRect))")
+        boundsRect = .init(width: 0, height: 0)
         return XR_SUCCESS
     }
 }
@@ -297,6 +344,15 @@ func xrGetActionStateBoolean(session: XrSession?, getInfo: UnsafePointer<XrActio
     return sessionObj.getActionState(info: getInfo!.pointee, boolean: &state!.pointee)
 }
 
+func xrGetActionStateVector2f(session: XrSession?, getInfo: UnsafePointer<XrActionStateGetInfo>?, state: UnsafeMutablePointer<XrActionStateVector2f>?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.getActionState(info: getInfo!.pointee, vector2f: &state!.pointee)
+}
+
 func xrWaitFrame(session: XrSession?, waitInfo: UnsafePointer<XrFrameWaitInfo>?, frameState: UnsafeMutablePointer<XrFrameState>?) -> XrResult {
     guard let session else {
         return XR_ERROR_HANDLE_INVALID
@@ -334,4 +390,40 @@ func xrLocateViews(session: XrSession?, locateInfo: UnsafePointer<XrViewLocateIn
     return sessionObj.locateViews(locateInfo: locateInfo!.pointee, state: &viewState!.pointee, views: .init(start: views, count: .init(viewCapacityInput)), viewCount: &viewCountOutput!.pointee)
 }
 
+
+func xrApplyHapticFeedback(session: XrSession?, actionInfo: UnsafePointer<XrHapticActionInfo>?, feedback: UnsafePointer<XrHapticBaseHeader>?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.applyHapticFeedback(actionInfo: actionInfo!.pointee, feedback: feedback!.pointee)
+}
+
+func xrEndSession(session: XrSession?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.end()
+}
+
+func xrGetCurrentInteractionProfile(session: XrSession?, topLevelUserPath: XrPath, interactionProfile: UnsafeMutablePointer<XrInteractionProfileState>?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.getCurrentInteractionProfile(topLevelUserPath: topLevelUserPath, interactionProfile: &interactionProfile!.pointee)
+}
+
+func xrGetReferenceSpaceBoundsRect(session: XrSession?, referenceSpaceType: XrReferenceSpaceType, boundsRect: UnsafeMutablePointer<XrExtent2Df>?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.getReferenceSpaceBoundsRect(referenceSpaceType: referenceSpaceType, boundsRect: &boundsRect!.pointee)
+}
 

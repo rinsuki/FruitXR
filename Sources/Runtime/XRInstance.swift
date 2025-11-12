@@ -370,3 +370,19 @@ func xrPollEvent(instance: XrInstance?, event: UnsafeMutablePointer<XrEventDataB
     let instanceObj = Unmanaged<XRInstance>.fromOpaque(.init(instance)).takeUnretainedValue()
     return instanceObj.pollEvent(event: &event!.pointee)
 }
+
+func xrResultToString(instance: XrInstance?, result: XrResult, resultString: UnsafeMutablePointer<CChar>?) -> XrResult {
+    guard let instance else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let instanceObj = Unmanaged<XRInstance>.fromOpaque(.init(instance)).takeUnretainedValue()
+    
+    guard let resultString else {
+        preconditionFailure()
+    }
+    
+    print("STUB: xrResultToString(\(instanceObj), \(result))")
+    
+    return XR_SUCCESS
+}

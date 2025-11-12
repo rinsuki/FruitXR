@@ -100,9 +100,19 @@ func getInstanceProcAddr(instance: XrInstance?, name: UnsafePointer<Int8>?, func
             xrDestroySession as PFN_xrDestroySession,
             to: PFN_xrVoidFunction.self
         )
+    case "xrEndSession":
+        functionPtr.pointee = unsafeBitCast(
+            xrEndSession as PFN_xrEndSession,
+            to: PFN_xrVoidFunction.self
+        )
     case "xrCreateAction":
         functionPtr.pointee = unsafeBitCast(
             xrCreateAction as PFN_xrCreateAction,
+            to: PFN_xrVoidFunction.self
+        )
+    case "xrDestroyAction":
+        functionPtr.pointee = unsafeBitCast(
+            xrDestroyAction as PFN_xrDestroyAction,
             to: PFN_xrVoidFunction.self
         )
     case "xrSuggestInteractionProfileBindings":
@@ -180,6 +190,11 @@ func getInstanceProcAddr(instance: XrInstance?, name: UnsafePointer<Int8>?, func
             xrGetActionStateBoolean as PFN_xrGetActionStateBoolean,
             to: PFN_xrVoidFunction.self
         )
+    case "xrGetActionStateVector2f":
+        functionPtr.pointee = unsafeBitCast(
+            xrGetActionStateVector2f as PFN_xrGetActionStateVector2f,
+            to: PFN_xrVoidFunction.self
+        )
     case "xrWaitFrame":
         functionPtr.pointee = unsafeBitCast(
             xrWaitFrame as PFN_xrWaitFrame,
@@ -218,6 +233,31 @@ func getInstanceProcAddr(instance: XrInstance?, name: UnsafePointer<Int8>?, func
     case "xrReleaseSwapchainImage":
         functionPtr.pointee = unsafeBitCast(
             xrReleaseSwapchainImage as PFN_xrReleaseSwapchainImage,
+            to: PFN_xrVoidFunction.self
+        )
+    case "xrApplyHapticFeedback":
+        functionPtr.pointee = unsafeBitCast(
+            xrApplyHapticFeedback as PFN_xrApplyHapticFeedback,
+            to: PFN_xrVoidFunction.self
+        )
+    case "xrGetCurrentInteractionProfile":
+        functionPtr.pointee = unsafeBitCast(
+            xrGetCurrentInteractionProfile as PFN_xrGetCurrentInteractionProfile,
+            to: PFN_xrVoidFunction.self
+        )
+    case "xrGetReferenceSpaceBoundsRect":
+        functionPtr.pointee = unsafeBitCast(
+            xrGetReferenceSpaceBoundsRect as PFN_xrGetReferenceSpaceBoundsRect,
+            to: PFN_xrVoidFunction.self
+        )
+    case "xrPathToString":
+        functionPtr.pointee = unsafeBitCast(
+            xrPathToString as PFN_xrPathToString,
+            to: PFN_xrVoidFunction.self
+        )
+    case "xrResultToString":
+        functionPtr.pointee = unsafeBitCast(
+            xrResultToString as PFN_xrResultToString,
             to: PFN_xrVoidFunction.self
         )
     // -- METAL --

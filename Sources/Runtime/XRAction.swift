@@ -11,6 +11,10 @@ class XRAction {
     init(actionSet: XRActionSet) {
         self.actionSet = actionSet
     }
+    
+    func destroy() {
+        print("STUB: destroy XRAction")
+    }
 }
 
 func xrCreateAction(actionSet: XrActionSet?, createInfo: UnsafePointer<XrActionCreateInfo>?, actionPtr: UnsafeMutablePointer<XrAction?>?) -> XrResult {
@@ -27,5 +31,17 @@ func xrCreateAction(actionSet: XrActionSet?, createInfo: UnsafePointer<XrActionC
     return XR_SUCCESS
 }
 
+func xrDestroyAction(action: XrAction?) -> XrResult {
+    guard let action else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    autoreleasepool {
+        let actionObj = Unmanaged<XRAction>.fromOpaque(.init(action)).takeRetainedValue()
+        actionObj.destroy()
+    }
+    
+    return XR_SUCCESS
+}
 
 
