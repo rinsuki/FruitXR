@@ -27,3 +27,10 @@ routine EndFrame(
     session_port : mach_port_t;
     info : EndFrameInfo
 );
+
+type CurrentHeadsetInfo = struct [7] of float;
+
+routine SessionGetCurrentInfo(
+    session_port: mach_port_t;
+    out current_headset_info: CurrentHeadsetInfo
+);

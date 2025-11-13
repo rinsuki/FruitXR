@@ -13,6 +13,7 @@ class XRSession {
     let instance: XRInstance
     let graphicsAPI: GraphicsAPI
     private(set) var destroyed = false
+    var currentHeadsetInfo = CurrentHeadsetInfo()
 
     enum GraphicsAPI {
         case metal(commandQueue: MTLCommandQueue)
@@ -163,6 +164,7 @@ class XRSession {
         print("STUB: xrWaitFrame(\(self), \(waitInfo), \(frameState))")
         usleep(1_000_000 / 120) // TODO: stub
         frameState.shouldRender = .init(XR_TRUE) // TODO: stub
+        FI_C_SessionGetCurrentInfo(port, &currentHeadsetInfo)
         return XR_SUCCESS
     }
     
@@ -229,8 +231,19 @@ class XRSession {
                 angleUp: convertDegreesToRadians(degree: 43.98),
                 angleDown: convertDegreesToRadians(degree: -54.27)
             )
-            views[i].pose.position = .init(x: 0, y: 0, z: 0)
-            views[i].pose.orientation = .init(x: 0, y: 0, z: 0, w: 1)
+            let ipd: Float = 63.0 / 1000
+            views[i].pose.position = .init(
+                // TODO: is it correct??
+                x: (i == 0 ? (-ipd/2.0) : (ipd/2.0)) + currentHeadsetInfo.hmd.position.x,
+                y: currentHeadsetInfo.hmd.position.y,
+                z: currentHeadsetInfo.hmd.position.z
+            )
+            views[i].pose.orientation = .init(
+                x: currentHeadsetInfo.hmd.orientation.x,
+                y: currentHeadsetInfo.hmd.orientation.y,
+                z: currentHeadsetInfo.hmd.orientation.z,
+                w: currentHeadsetInfo.hmd.orientation.w
+            )
         }
         
         return XR_SUCCESS

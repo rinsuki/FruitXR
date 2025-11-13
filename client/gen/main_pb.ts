@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file main.proto.
  */
 export const file_main: GenFile = /*@__PURE__*/
-  fileDesc("CgptYWluLnByb3RvImoKCVRvQnJvd3NlchIuChB2aWRlb19pbml0aWFsaXplGAogASgLMhIuVEJWaWRlb0luaXRpYWxpemVIABIiCgp2aWRlb19kYXRhGAsgASgLMgwuVEJWaWRlb0RhdGFIAEIJCgdtZXNzYWdlIm4KEVRCVmlkZW9Jbml0aWFsaXplEgsKA2V5ZRgBIAEoDRIYChBpbml0aWFsaXplX2NvdW50GAIgASgNEhoKBWNvZGVjGAMgASgOMgsuVmlkZW9Db2RlYxIWCg5wYXJhbWV0ZXJfc2V0cxgEIAMoDCJXCgtUQlZpZGVvRGF0YRILCgNleWUYASABKA0SGAoQaW5pdGlhbGl6ZV9jb3VudBgCIAEoDRIQCghrZXlmcmFtZRgEIAEoCBIPCgdjb250ZW50GAMgASgMIkAKC0Zyb21Ccm93c2VyEiYKDGluaXRfZW5jb2RlchgBIAEoCzIOLkZCSW5pdEVuY29kZXJIAEIJCgdtZXNzYWdlIg8KDUZCSW5pdEVuY29kZXIqJAoKVmlkZW9Db2RlYxILCgdVTktOT1dOEAASCQoESEVWQxCJAmIIZWRpdGlvbnNw6Ac");
+  fileDesc("CgptYWluLnByb3RvImoKCVRvQnJvd3NlchIuChB2aWRlb19pbml0aWFsaXplGAogASgLMhIuVEJWaWRlb0luaXRpYWxpemVIABIiCgp2aWRlb19kYXRhGAsgASgLMgwuVEJWaWRlb0RhdGFIAEIJCgdtZXNzYWdlIm4KEVRCVmlkZW9Jbml0aWFsaXplEgsKA2V5ZRgBIAEoDRIYChBpbml0aWFsaXplX2NvdW50GAIgASgNEhoKBWNvZGVjGAMgASgOMgsuVmlkZW9Db2RlYxIWCg5wYXJhbWV0ZXJfc2V0cxgEIAMoDCJXCgtUQlZpZGVvRGF0YRILCgNleWUYASABKA0SGAoQaW5pdGlhbGl6ZV9jb3VudBgCIAEoDRIQCghrZXlmcmFtZRgEIAEoCBIPCgdjb250ZW50GAMgASgMInAKC0Zyb21Ccm93c2VyEiYKDGluaXRfZW5jb2RlchgBIAEoCzIOLkZCSW5pdEVuY29kZXJIABIuChBjdXJyZW50X3Bvc2l0aW9uGAIgASgLMhIuRkJDdXJyZW50UG9zaXRpb25IAEIJCgdtZXNzYWdlIg8KDUZCSW5pdEVuY29kZXIiKwoIUG9zaXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAIiOQoLT3JpZW50YXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAISCQoBdxgEIAEoAiJLCglUcmFuc2Zvcm0SGwoIcG9zaXRpb24YASABKAsyCS5Qb3NpdGlvbhIhCgtvcmllbnRhdGlvbhgCIAEoCzIMLk9yaWVudGF0aW9uIiwKEUZCQ3VycmVudFBvc2l0aW9uEhcKA2htZBgBIAEoCzIKLlRyYW5zZm9ybSokCgpWaWRlb0NvZGVjEgsKB1VOS05PV04QABIJCgRIRVZDEIkCYghlZGl0aW9uc3DoBw");
 
 /**
  * @generated from message ToBrowser
@@ -118,6 +118,12 @@ export type FromBrowser = Message<"FromBrowser"> & {
      */
     value: FBInitEncoder;
     case: "initEncoder";
+  } | {
+    /**
+     * @generated from field: FBCurrentPosition current_position = 2;
+     */
+    value: FBCurrentPosition;
+    case: "currentPosition";
   } | { case: undefined; value?: undefined };
 };
 
@@ -140,6 +146,104 @@ export type FBInitEncoder = Message<"FBInitEncoder"> & {
  */
 export const FBInitEncoderSchema: GenMessage<FBInitEncoder> = /*@__PURE__*/
   messageDesc(file_main, 4);
+
+/**
+ * @generated from message Position
+ */
+export type Position = Message<"Position"> & {
+  /**
+   * @generated from field: float x = 1;
+   */
+  x: number;
+
+  /**
+   * @generated from field: float y = 2;
+   */
+  y: number;
+
+  /**
+   * @generated from field: float z = 3;
+   */
+  z: number;
+};
+
+/**
+ * Describes the message Position.
+ * Use `create(PositionSchema)` to create a new message.
+ */
+export const PositionSchema: GenMessage<Position> = /*@__PURE__*/
+  messageDesc(file_main, 5);
+
+/**
+ * @generated from message Orientation
+ */
+export type Orientation = Message<"Orientation"> & {
+  /**
+   * @generated from field: float x = 1;
+   */
+  x: number;
+
+  /**
+   * @generated from field: float y = 2;
+   */
+  y: number;
+
+  /**
+   * @generated from field: float z = 3;
+   */
+  z: number;
+
+  /**
+   * @generated from field: float w = 4;
+   */
+  w: number;
+};
+
+/**
+ * Describes the message Orientation.
+ * Use `create(OrientationSchema)` to create a new message.
+ */
+export const OrientationSchema: GenMessage<Orientation> = /*@__PURE__*/
+  messageDesc(file_main, 6);
+
+/**
+ * @generated from message Transform
+ */
+export type Transform = Message<"Transform"> & {
+  /**
+   * @generated from field: Position position = 1;
+   */
+  position?: Position;
+
+  /**
+   * @generated from field: Orientation orientation = 2;
+   */
+  orientation?: Orientation;
+};
+
+/**
+ * Describes the message Transform.
+ * Use `create(TransformSchema)` to create a new message.
+ */
+export const TransformSchema: GenMessage<Transform> = /*@__PURE__*/
+  messageDesc(file_main, 7);
+
+/**
+ * @generated from message FBCurrentPosition
+ */
+export type FBCurrentPosition = Message<"FBCurrentPosition"> & {
+  /**
+   * @generated from field: Transform hmd = 1;
+   */
+  hmd?: Transform;
+};
+
+/**
+ * Describes the message FBCurrentPosition.
+ * Use `create(FBCurrentPositionSchema)` to create a new message.
+ */
+export const FBCurrentPositionSchema: GenMessage<FBCurrentPosition> = /*@__PURE__*/
+  messageDesc(file_main, 8);
 
 /**
  * @generated from enum VideoCodec

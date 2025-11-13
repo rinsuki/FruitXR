@@ -86,11 +86,11 @@ class Client {
         this.session.updateRenderState({
             baseLayer: this.glLayer,
         })
-        this.setupWebXR()
         // websocket setup
         ws.binaryType = "arraybuffer"
         ws.addEventListener("open", () => {
             this.handleOpen()
+            this.setupWebXR()
         })
         ws.addEventListener("message", e => {
             if (!(e.data instanceof ArrayBuffer)) {
@@ -141,6 +141,26 @@ class Client {
         }
 
         // TODO: send poses
+        this.sendMessage({
+            message: {
+                case: "currentPosition",
+                value: {
+                    hmd: {
+                        position: {
+                            x: pose.transform.position.x,
+                            y: pose.transform.position.y,
+                            z: pose.transform.position.z,
+                        },
+                        orientation: {
+                            x: pose.transform.orientation.x,
+                            y: pose.transform.orientation.y,
+                            z: pose.transform.orientation.z,
+                            w: pose.transform.orientation.w,
+                        }
+                    }
+                }
+            }
+        })
         
         // draw
         let i = 0

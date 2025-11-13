@@ -15,3 +15,27 @@ _Static_assert(sizeof(EndFrameInfoPerEye) == (sizeof(int32_t) * 1), "EndFrameInf
 typedef struct {
     EndFrameInfoPerEye eyes[2];
 } EndFrameInfo;
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+} Position;
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+    float w;
+} Orientation;
+
+typedef struct {
+    Position position;
+    Orientation orientation;
+} Transform;
+
+typedef struct {
+    Transform hmd;
+} CurrentHeadsetInfo;
+
+_Static_assert(sizeof(CurrentHeadsetInfo) == (sizeof(float) * 7), "CurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");

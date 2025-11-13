@@ -12,6 +12,7 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
     let port: NSMachPort
     var encoder = (XRVideoEncoder(eye: 0), XRVideoEncoder(eye: 1))
     var websocket = URLSession.shared.webSocketTask(with: URL(string: "ws://localhost:18034/encoder")!)
+    var currentInfo = CurrentHeadsetInfo()
     
     override init() {
         var rawPort: mach_port_t = .init(MACH_PORT_NULL)
@@ -25,10 +26,43 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
         encoder.1.delegate = self
         websocket.resume()
         // TODO: should wait until websocket opens
+        Task {
+            await receiveLoop()
+        }
     }
     
     deinit {
         Self.logger.trace("deinit: \(self)")
+    }
+    
+    func receiveLoop() async {
+        do {
+            while true {
+                let res = try await websocket.receive()
+                guard case .data(let data) = res else {
+                    continue
+                }
+                let fb = try FromBrowser(serializedBytes: data)
+                guard let message = fb.message else {
+                    return
+                }
+                switch message {
+                case .initEncoder(let ie):
+                    // TODO
+                    break
+                case .currentPosition(let cp):
+                    currentInfo.hmd.position.x = cp.hmd.position.x
+                    currentInfo.hmd.position.y = cp.hmd.position.y
+                    currentInfo.hmd.position.z = cp.hmd.position.z
+                    currentInfo.hmd.orientation.x = cp.hmd.orientation.x
+                    currentInfo.hmd.orientation.y = cp.hmd.orientation.y
+                    currentInfo.hmd.orientation.z = cp.hmd.orientation.z
+                    currentInfo.hmd.orientation.w = cp.hmd.orientation.w
+                }
+            }
+        } catch {
+            Self.logger.error("receiveLoop fail: \(error)")
+        }
     }
     
     func send(message: ToBrowser) {
@@ -72,5 +106,9 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                 }
             }
         }
+    }
+    
+    @objc func getCurrentHeadsetInfo(_ chi: UnsafeMutablePointer<CurrentHeadsetInfo>) {
+        chi.pointee = currentInfo
     }
 }

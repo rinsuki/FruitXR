@@ -30,8 +30,31 @@ message TBVideoData {
 message FromBrowser {
     oneof message {
         FBInitEncoder init_encoder = 1;
+        FBCurrentPosition current_position = 2;
     }
 }
 
 message FBInitEncoder {
+}
+
+message Position {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+}
+
+message Orientation {
+    float x = 1;
+    float y = 2;
+    float z = 3;
+    float w = 4;
+}
+
+message Transform {
+    Position position = 1;
+    Orientation orientation = 2;
+}
+
+message FBCurrentPosition {
+    Transform hmd = 1;
 }
