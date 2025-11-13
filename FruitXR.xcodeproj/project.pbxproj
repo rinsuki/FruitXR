@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		CE4D554C2D815224000513A9 /* libFruitXRRuntime.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CE4D552E2D811C13000513A9 /* libFruitXRRuntime.dylib */; };
 		CE4D554D2D815224000513A9 /* libFruitXRRuntime.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = CE4D552E2D811C13000513A9 /* libFruitXRRuntime.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		CEAAEC772DAE7E2D00E28D98 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = CEAAEC762DAE7E2D00E28D98 /* SwiftProtobuf */; };
 		CEC110E52D9F36350080B0BD /* libFruitXRIPC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC110D72D9F36100080B0BD /* libFruitXRIPC.a */; };
 		CEC110E82D9F36530080B0BD /* libFruitXRIPC.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CEC110D72D9F36100080B0BD /* libFruitXRIPC.a */; };
 /* End PBXBuildFile section */
@@ -516,8 +517,15 @@
 				App/AppDelegate.swift,
 				App/Assets.xcassets,
 				App/openxr_manifest.json,
-				App/some.m,
+				App/proto/main.proto,
+				"App/proto/swift-protobuf-config.json",
+				App/XRServer.swift,
+				"App/XRServer+handleMessage.m",
+				App/XRServerInstance.swift,
+				App/XRServerSession.swift,
 				App/XRServerSwapchain.swift,
+				App/XRVideoEncoder.swift,
+				App/XRVideoEncoderDelegate.swift,
 				Shared/FruitXR_IPC.defs,
 			);
 			target = CE4D54FD2D810E7D000513A9 /* FruitXR */;
@@ -530,6 +538,7 @@
 				Runtime/test.c,
 				Runtime/XRAction.swift,
 				Runtime/XRActionSet.swift,
+				Runtime/XRError.swift,
 				Runtime/XRInstance.swift,
 				Runtime/XRPath.swift,
 				Runtime/XRResult.swift,
@@ -552,6 +561,23 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		CE537AEA2EC470CF001D3BAC /* Exceptions for "Sources" folder in "Compile Sources" phase from "FruitXR" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = CE4D54FA2D810E7D000513A9 /* Sources */;
+			membershipExceptions = (
+				Shared/IPCStructs.h,
+			);
+		};
+		CE537AEB2EC470CF001D3BAC /* Exceptions for "Sources" folder in "Compile Sources" phase from "FruitXRRuntime" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = CE4D552B2D811C13000513A9 /* Sources */;
+			membershipExceptions = (
+				Shared/IPCStructs.h,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		CE4D55102D810E7E000513A9 /* FruitXRTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -567,7 +593,9 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				CE4D55422D815197000513A9 /* Exceptions for "Sources" folder in "FruitXR" target */,
+				CE537AEA2EC470CF001D3BAC /* Exceptions for "Sources" folder in "Compile Sources" phase from "FruitXR" target */,
 				CE4D55482D8151A0000513A9 /* Exceptions for "Sources" folder in "FruitXRRuntime" target */,
+				CE537AEB2EC470CF001D3BAC /* Exceptions for "Sources" folder in "Compile Sources" phase from "FruitXRRuntime" target */,
 				CEC110E42D9F361F0080B0BD /* Exceptions for "Sources" folder in "FruitXRIPC" target */,
 			);
 			path = Sources;
@@ -582,6 +610,7 @@
 			files = (
 				CE4D554C2D815224000513A9 /* libFruitXRRuntime.dylib in Frameworks */,
 				CEC110E82D9F36530080B0BD /* libFruitXRIPC.a in Frameworks */,
+				CEAAEC772DAE7E2D00E28D98 /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1493,11 +1522,13 @@
 			buildRules = (
 			);
 			dependencies = (
+				CEAAEC792DAE7E6900E28D98 /* PBXTargetDependency */,
 				CE4D554F2D815224000513A9 /* PBXTargetDependency */,
 				CEC110EA2D9F36530080B0BD /* PBXTargetDependency */,
 			);
 			name = FruitXR;
 			packageProductDependencies = (
+				CEAAEC762DAE7E2D00E28D98 /* SwiftProtobuf */,
 			);
 			productName = FruitXR;
 			productReference = CE4D54FE2D810E7D000513A9 /* FruitXR.app */;
@@ -1629,6 +1660,9 @@
 			);
 			mainGroup = CE4D54F52D810E7D000513A9;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				CEAAEC752DAE7E2D00E28D98 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = CE4D54FF2D810E7D000513A9 /* Products */;
 			projectDirPath = "";
@@ -1720,6 +1754,10 @@
 			isa = PBXTargetDependency;
 			target = CE4D552D2D811C13000513A9 /* FruitXRRuntime */;
 			targetProxy = CE4D554E2D815224000513A9 /* PBXContainerItemProxy */;
+		};
+		CEAAEC792DAE7E6900E28D98 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = CEAAEC782DAE7E6900E28D98 /* SwiftProtobufPlugin */;
 		};
 		CEC110E72D9F36350080B0BD /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -2101,6 +2139,30 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		CEAAEC752DAE7E2D00E28D98 /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-protobuf.git";
+			requirement = {
+				kind = exactVersion;
+				version = 1.29.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		CEAAEC762DAE7E2D00E28D98 /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEAAEC752DAE7E2D00E28D98 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
+		};
+		CEAAEC782DAE7E6900E28D98 /* SwiftProtobufPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = CEAAEC752DAE7E2D00E28D98 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = "plugin:SwiftProtobufPlugin";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CE4D54F62D810E7D000513A9 /* Project object */;
 }

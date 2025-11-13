@@ -9,6 +9,7 @@ import Foundation
 import Metal
 
 class XRSession {
+    let port: mach_port_t
     let instance: XRInstance
     let graphicsAPI: GraphicsAPI
     private(set) var destroyed = false
@@ -17,9 +18,10 @@ class XRSession {
         case metal(commandQueue: MTLCommandQueue)
     }
 
-    init(instance: XRInstance, graphicsAPI: GraphicsAPI) {
+    init(instance: XRInstance, graphicsAPI: GraphicsAPI, port: mach_port_t) {
         self.instance = instance
         self.graphicsAPI = graphicsAPI
+        self.port = port
     }
     
     static func create(instance: XRInstance, createInfo: XrSessionCreateInfo) -> XRResult<XRSession> {
@@ -42,7 +44,19 @@ class XRSession {
             return .failure(XR_ERROR_RUNTIME_FAILURE)
         }
         
-        let session = XRSession(instance: instance, graphicsAPI: graphicsAPI)
+        guard let instancePort = instance.port else {
+            print("INVALID instance port")
+            return .failure(XR_ERROR_RUNTIME_FAILURE)
+        }
+        
+        var port: mach_port_t = .init(MACH_PORT_NULL)
+        let result = FI_C_SessionCreate(instancePort.machPort, &port)
+        guard result == KERN_SUCCESS else {
+            print("FAILED to call SessionCreate \(result)")
+            return .failure(XR_ERROR_RUNTIME_FAILURE)
+        }
+        
+        let session = XRSession(instance: instance, graphicsAPI: graphicsAPI, port: port)
         instance.push(event: .ready(session))
         return .success(session)
     }
@@ -167,10 +181,27 @@ class XRSession {
             switch layer.pointee.type {
             case XR_TYPE_COMPOSITION_LAYER_PROJECTION:
                 // TODO: cares about the space
-                layer.withMemoryRebound(to: XrCompositionLayerProjection.self, capacity: 1, { pointer in
-                    print(pointer.pointee)
+                let res = layer.withMemoryRebound(to: XrCompositionLayerProjection.self, capacity: 1, { projectionLayer in
+                    print(projectionLayer.pointee)
+                    if projectionLayer.pointee.viewCount != 2 {
+                        print("WARNING: viewCount should be two but \(projectionLayer.pointee.viewCount)")
+                        return XR_ERROR_LAYER_INVALID
+                    }
+                    var endInfo = EndFrameInfo()
+                    withUnsafeMutableBytes(of: &endInfo.eyes) {
+                        $0.withMemoryRebound(to: EndFrameInfoPerEye.self) { eyes in
+                            for i in 0..<eyes.count {
+                                let swapchain = Unmanaged<XRSwapchain>.fromOpaque(.init(projectionLayer.pointee.views[i].subImage.swapchain)).takeUnretainedValue()
+                                eyes[i].swapchain_id = swapchain.remoteId
+                            }
+                        }
+                    }
+                    FI_C_EndFrame(port, endInfo)
+                    return XR_SUCCESS
                 })
-                break
+                if res != XR_SUCCESS {
+                    return res
+                }
             default:
                 print("WARNING: layer \(layer.pointee.type) is not supported at this time")
                 return XR_ERROR_LAYER_INVALID

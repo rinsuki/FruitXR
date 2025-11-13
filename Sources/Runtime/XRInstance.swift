@@ -14,13 +14,28 @@ class XRInstance {
     enum Event {
         case ready(XRSession)
     }
+
+    var port: NSMachPort?
     
     private let device: MTLDevice
     private var destroyed: Bool = false
     private var queuedEvents = [Event]()
 //    private let port: CFMessagePort
     
-    init() {
+    init() throws(XRError) {
+        guard let machServer = FXMachBootstrapServer.sharedInstance() as? FXMachBootstrapServer else {
+            throw XRError(result: XR_ERROR_INITIALIZATION_FAILED)
+        }
+        guard let serverPort = machServer.port(forName: "net.rinsuki.apps.FruitXR.IPC") as? NSMachPort else {
+            throw XRError(result: XR_ERROR_INITIALIZATION_FAILED)
+        }
+        var port: mach_port_t = 0
+        let res = FI_C_InstanceCreate(serverPort.machPort, &port)
+        guard res == KERN_SUCCESS, port != 0 else {
+            print("ERR: failed to call InstanceCreate: \(res)")
+            throw XRError(result: XR_ERROR_INITIALIZATION_FAILED)
+        }
+        self.port = .init(machPort: port, options: [.deallocateSendRight, .deallocateReceiveRight])
         // TODO: We need to ask the server for the which GPU should be used for rendering
         // (btw, since we will only support the Apple Silicon Mac, they will likely have a only one GPU, unless Apple will support dGPU for Mac Pro or eGPU)
         device = MTLCreateSystemDefaultDevice()!
@@ -31,6 +46,7 @@ class XRInstance {
     }
     
     func destroy() {
+        self.port = nil
         destroyed = true
     }
     
@@ -210,9 +226,13 @@ func xrCreateInstance(
     guard let createdInstance else {
         return XR_ERROR_RUNTIME_FAILURE
     }
-    let instance = XRInstance()
-    let ptr = Unmanaged.passRetained(instance).toOpaque()
-    createdInstance.pointee = OpaquePointer(ptr)
+    do {
+        let instance = try XRInstance()
+        let ptr = Unmanaged.passRetained(instance).toOpaque()
+        createdInstance.pointee = OpaquePointer(ptr)
+    } catch {
+        return error.result
+    }
 
     return XR_SUCCESS
 }

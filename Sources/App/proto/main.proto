@@ -1,0 +1,37 @@
+edition = "2023";
+
+message ToBrowser {
+    oneof message {
+        TBVideoInitialize video_initialize = 10;
+        TBVideoData video_data = 11;
+    }
+}
+
+enum VideoCodec {
+    UNKNOWN = 0;
+    // should we have H.264?
+    HEVC = 265;
+}
+
+message TBVideoInitialize {
+    uint32 eye = 1;
+    uint32 initialize_count = 2;
+    VideoCodec codec = 3;
+    repeated bytes parameter_sets = 4;
+}
+
+message TBVideoData {
+    uint32 eye = 1;
+    uint32 initialize_count = 2;
+    bool keyframe = 4;
+    bytes content = 3;
+}
+
+message FromBrowser {
+    oneof message {
+        FBInitEncoder init_encoder = 1;
+    }
+}
+
+message FBInitEncoder {
+}

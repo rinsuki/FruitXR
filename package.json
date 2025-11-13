@@ -1,0 +1,27 @@
+{
+  "name": "FruitXR",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.21.0",
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.59.0",
+    "@bufbuild/protobuf": "^2.10.1",
+    "@bufbuild/protoc-gen-es": "^2.10.1",
+    "@types/webxr": "^0.5.24",
+    "@types/ws": "^8.18.1",
+    "tsimp": "^2.0.12",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2"
+  }
+}

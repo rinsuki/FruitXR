@@ -15,15 +15,16 @@ class XRSwapchain {
     private var ioSurfaces = [IOSurface]()
     private var textures = [MTLTexture]()
     private var destroyed = false
-    private let port = (FXMachBootstrapServer.sharedInstance() as! FXMachBootstrapServer).port(forName: "net.rinsuki.apps.FruitXR.IPC") as! NSMachPort
-    var instanceID: Int32
+    var remoteId: UInt32
+    var port: mach_port_t
     var currentTextureIndex: Int = 0
 
-    nonisolated(unsafe) init(session: XRSession, createInfo: XrSwapchainCreateInfo) {
+    nonisolated(unsafe) init(session: XRSession, createInfo: XrSwapchainCreateInfo) throws(XRError) {
         self.session = session
         
-        instanceID = 0
-        assert(FI_C_SwapchainCreate(port.machPort, &instanceID) == KERN_SUCCESS)
+        port = 0
+        remoteId = 0
+        assert(FI_C_SwapchainCreate(session.port, &port, &remoteId) == KERN_SUCCESS)
         
         switch session.graphicsAPI {
         case .metal(let commandQueue):
@@ -64,7 +65,7 @@ class XRSwapchain {
                 textures.append(texture)
 
                 print("trying to send", ioSurface, "through", port)
-                assert(FI_C_SwapchainAddIOSurface(port.machPort, instanceID, IOSurfaceCreateMachPort(ioSurface)) == KERN_SUCCESS)
+                assert(FI_C_SwapchainAddIOSurface(port, IOSurfaceCreateMachPort(ioSurface)) == KERN_SUCCESS)
             }
         }
     }
@@ -114,7 +115,7 @@ class XRSwapchain {
 
     func releaseImage(info: XrSwapchainImageReleaseInfo?) -> XrResult {
         print("STUB: XRSwapchain.releaseImage(\(info))")
-        assert(FI_C_SwapchainSwitch(port.machPort, instanceID, Int32(currentTextureIndex % ioSurfaces.count)) == KERN_SUCCESS)
+        assert(FI_C_SwapchainSwitch(port, Int32(currentTextureIndex % ioSurfaces.count)) == KERN_SUCCESS)
         return XR_SUCCESS
     }
 }
@@ -126,9 +127,13 @@ func xrCreateSwapchain(session: XrSession?, createInfo: UnsafePointer<XrSwapchai
     
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
     
-    let swapchain = XRSwapchain(session: sessionObj, createInfo: createInfo!.pointee)
-    let ptr = Unmanaged.passRetained(swapchain).toOpaque()
-    swapchainPtr!.pointee = OpaquePointer(ptr)
+    do {
+        let swapchain = try XRSwapchain(session: sessionObj, createInfo: createInfo!.pointee)
+        let ptr = Unmanaged.passRetained(swapchain).toOpaque()
+        swapchainPtr!.pointee = OpaquePointer(ptr)
+    } catch {
+        return error.result
+    }
     
     return XR_SUCCESS
 }

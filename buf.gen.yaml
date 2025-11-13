@@ -1,0 +1,7 @@
+version: v2
+inputs:
+- directory: Sources/App/proto
+plugins:
+- local: protoc-gen-es
+  opt: target=ts
+  out: client/gen
