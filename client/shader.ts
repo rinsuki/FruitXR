@@ -24,3 +24,31 @@ void main(void) {
         1.0
     );
 }`
+
+export function createShaderProgram(gl: WebGLRenderingContext) {
+    const vs = gl.createShader(gl.VERTEX_SHADER)
+    if (vs == null) throw new Error("failed to create vertex shader")
+    gl.shaderSource(vs, srcVertexShader)
+    gl.compileShader(vs)
+    if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
+        throw new Error("failed to compile vertex shader: " + gl.getShaderInfoLog(vs))
+    }
+
+    const fs = gl.createShader(gl.FRAGMENT_SHADER)
+    if (fs == null) throw new Error("failed to create fragment shader")
+    gl.shaderSource(fs, srcFragmentShader)
+    gl.compileShader(fs)
+    if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
+        throw new Error("failed to compile fragment shader: " + gl.getShaderInfoLog(fs))
+    }
+
+    const program = gl.createProgram()
+    if (program == null) throw new Error("failed to create program")
+    gl.attachShader(program, vs)
+    gl.attachShader(program, fs)
+    gl.linkProgram(program)
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        throw new Error("failed to link program: " + gl.getProgramInfoLog(program))
+    }
+    return program
+}

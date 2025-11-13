@@ -1,18 +1,14 @@
 import { create, fromBinary, toBinary, type MessageInitShape } from "@bufbuild/protobuf"
 import { FromBrowserSchema, ToBrowserSchema, VideoCodec, type FromBrowser, type ToBrowser } from "./gen/main_pb.js"
 import { parseInitNALUHEVC } from "./utils/hevc_parser.js"
+import { createShaderProgram } from "./shader.js"
 
 class EyeRenderer {
     videoDecoder = this.createNewDecoder()
     parameterSets: Uint8Array[] = []
     ts = 0
-    canvas = document.createElement("canvas")
-    ctx = this.canvas.getContext("2d")!
     prev = performance.now()
-
-    constructor() {
-        document.body.appendChild(this.canvas)
-    }
+    lastFrame: VideoFrame | null = null
 
     createNewDecoder() {
         return new VideoDecoder({
@@ -20,10 +16,11 @@ class EyeRenderer {
                 alert(`VideoDecoder error: ${e.message}`)
             },
             output: frame => {
-                this.canvas.width = frame.codedWidth
-                this.canvas.height = frame.codedHeight
-                this.ctx.drawImage(frame, 0, 0)
-                frame.close()
+                if (this.lastFrame) {
+                    this.lastFrame.close()
+                }
+                this.lastFrame = frame
+
                 const now = performance.now()
                 const fps = 1000 / (now - this.prev)
                 this.prev = now
@@ -76,8 +73,21 @@ class Client {
         new EyeRenderer(),
         new EyeRenderer(),
     ] as const
+    gl: WebGLRenderingContext
+    glLayer: XRWebGLLayer
+    referenceSpace!: XRReferenceSpace
 
     constructor(public session: XRSession, public ws: WebSocket) {
+        // webxr setup
+        const canvas = document.createElement("canvas")
+        document.body.appendChild(canvas)
+        this.gl = canvas.getContext("webgl", { xrCompatible: true })!
+        this.glLayer = new XRWebGLLayer(this.session, this.gl)
+        this.session.updateRenderState({
+            baseLayer: this.glLayer,
+        })
+        this.setupWebXR()
+        // websocket setup
         ws.binaryType = "arraybuffer"
         ws.addEventListener("open", () => {
             this.handleOpen()
@@ -97,6 +107,58 @@ class Client {
             session.end()
             alert(`WebSocket error: ${e}`)
         })
+    }
+
+    async setupWebXR() {
+        this.referenceSpace = await this.session.requestReferenceSpace("local-floor")
+        const program = createShaderProgram(this.gl)
+        this.gl.useProgram(program)
+
+        const texCoord = this.gl.getAttribLocation(program, "a_texCoord")
+        this.gl.enableVertexAttribArray(texCoord)
+        const uvPos = new Float32Array([0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0])
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.gl.createBuffer())
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, uvPos, this.gl.STATIC_DRAW)
+        this.gl.vertexAttribPointer(texCoord, 2, this.gl.FLOAT, false, 0, 0)
+        this.gl.activeTexture(this.gl.TEXTURE0)
+        this.gl.bindTexture(this.gl.TEXTURE_2D, this.gl.createTexture())
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR)
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE)
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE)
+        this.gl.uniform1i(this.gl.getUniformLocation(program, "sampler0"), 0)
+        this.gl.uniform1f(this.gl.getUniformLocation(this.gl.getParameter(this.gl.CURRENT_PROGRAM), "width"), 1)
+        this.session.requestAnimationFrame(this.raf)
+        console.log("webxr started")
+    }
+
+    raf: XRFrameRequestCallback = (time, frame) => {
+        if (this.referenceSpace == null) return console.log("referenceSpace is null")
+        this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.glLayer.framebuffer)
+        const pose = frame.getViewerPose(this.referenceSpace)
+        if (pose == null) {
+            console.log("pose is null")
+            return
+        }
+
+        // TODO: send poses
+        
+        // draw
+        let i = 0
+        for (const view of pose.views) {
+            const viewport = this.glLayer.getViewport(view)
+            if (viewport == null) continue
+            this.gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
+            const frame = this.eyes[i++]?.lastFrame
+            if (frame != null) {
+                this.gl.activeTexture(this.gl.TEXTURE0)
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, frame.codedWidth, frame.codedHeight, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
+                this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, frame)
+            }
+            this.gl.uniform1f(this.gl.getUniformLocation(this.gl.getParameter(this.gl.CURRENT_PROGRAM), "left"), 0)
+            this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, 4)
+            this.gl.flush()
+        }
+        this.session.requestAnimationFrame(this.raf)
     }
 
     handleOpen() {
@@ -127,7 +189,7 @@ class Client {
                 alert("videoData.content is null")
                 break
             }
-            console.log(v.content)
+            // console.log(v.content)
             this.eyes[v.eye]!.receive(v.content!, v.keyframe)
             break
         }
@@ -157,7 +219,9 @@ function main() {
     app.appendChild(button)
 
     button.addEventListener("click", () => {
-        xr.requestSession("immersive-vr").then(session => {
+        xr.requestSession("immersive-vr", {
+            requiredFeatures: ["local-floor"],
+        }).then(session => {
             const ws = new WebSocket("ws://localhost:18034/decoder")
             new Client(session, ws)
         })
