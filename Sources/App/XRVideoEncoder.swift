@@ -40,7 +40,15 @@ class XRVideoEncoder {
             VTSessionSetProperty(session!, key: kVTCompressionPropertyKey_PrioritizeEncodingSpeedOverQuality, value: kCFBooleanTrue)
         }
         
-        let encodeRes = VTCompressionSessionEncodeFrame(session!, imageBuffer: pixelBuffer!.takeUnretainedValue(), presentationTimeStamp: .zero, duration: .zero, frameProperties: nil, sourceFrameRefcon: nil, infoFlagsOut: nil)
+        let encodeRes = VTCompressionSessionEncodeFrame(
+            session!,
+            imageBuffer: pixelBuffer!.takeUnretainedValue(),
+            presentationTimeStamp: .zero,
+            duration: .zero,
+            frameProperties: nil,
+            sourceFrameRefcon: nil,
+            infoFlagsOut: nil
+        )
         assert(encodeRes == noErr)
     }
     
