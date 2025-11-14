@@ -14,17 +14,32 @@ class XREncodeFrameInfo: NSObject {
     let eye: Int8 = 0
 }
 
+class Surface {
+    let ioSurface: IOSurface
+    let texture: MTLTexture
+    let ciImage: CIImage
+    
+    init(ioSurface: IOSurface, device: any MTLDevice) {
+        self.ioSurface = ioSurface
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Uint, width: ioSurface.width, height: ioSurface.height, mipmapped: false)
+        texture = device.makeTexture(descriptor: descriptor, iosurface: ioSurface, plane: 0)!
+        ciImage = .init(ioSurface: ioSurface)
+    }
+}
+
 class XRServerSwapchain: NSObject {
     static let logger = Logger(subsystem: "net.rinsuki.apps.FruitXR", category: "XRServerSession")
     let port: NSMachPort
     @objc let remoteId: UInt32
     
-    var surfaces: [IOSurface] = []
+    var surfaces: [Surface] = []
     let window = NSWindow(contentRect: .init(origin: .zero, size: .zero), styleMask: .titled, backing: .buffered, defer: true)
     let view = NSView()
-    var lastActiveSurface: IOSurface?
+    let session: XRServerSession
+    var lastActiveSurface: Surface?
 
-    override init() {
+    init(session: XRServerSession) {
+        self.session = session
         var rawPort: mach_port_t = .init(MACH_PORT_NULL)
         precondition(KERN_SUCCESS == mach_port_allocate(mach_task_self_, MACH_PORT_RIGHT_RECEIVE, &rawPort))
         port = .init(machPort: rawPort, options: [.deallocateReceiveRight])
@@ -48,13 +63,13 @@ class XRServerSwapchain: NSObject {
     }
     
     @objc(addIOSurface:) func add(ioSurface: IOSurface) {
-        surfaces.append(ioSurface)
+        surfaces.append(.init(ioSurface: ioSurface, device: session.instance.device))
         window.setContentSize(.init(width: ioSurface.width, height: ioSurface.height))
     }
     
     @objc(switchSurfaceTo:) func switchSurface(to index: Int32) {
         let surface = surfaces[Int(index)]
         lastActiveSurface = surface
-        view.layer!.contents = surface
+        view.layer!.contents = surface.ioSurface
     }
 }

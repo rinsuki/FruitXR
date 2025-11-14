@@ -5,25 +5,42 @@
 //  Created by user on 2025/11/12.
 //
 
+import CoreImage
 import OSLog
 
 class XRServerSession: NSObject, XRVideoEncoderDelegate {
     static let logger = Logger(subsystem: "net.rinsuki.apps.FruitXR", category: "XRServerSession")
     let port: NSMachPort
-    var encoder = (XRVideoEncoder(eye: 0), XRVideoEncoder(eye: 1))
+    var encoder = XRVideoEncoder(eye: 0)
     var websocket = URLSession.shared.webSocketTask(with: URL(string: "ws://localhost:18034/encoder")!)
     var currentInfo = CurrentHeadsetInfo()
+    let instance: XRServerInstance
+    var pixelBufferPool: CVPixelBufferPool?
+    let ciContext: CIContext
+    let commandQueue: MTLCommandQueue
+    var textureCache: CVMetalTextureCache!
     
-    override init() {
+    init(instance: XRServerInstance) {
+        self.instance = instance
         var rawPort: mach_port_t = .init(MACH_PORT_NULL)
         precondition(KERN_SUCCESS == mach_port_allocate(mach_task_self_, MACH_PORT_RIGHT_RECEIVE, &rawPort))
         port = .init(machPort: rawPort, options: [.deallocateReceiveRight])
+        precondition(kCVReturnSuccess == CVPixelBufferPoolCreate(nil, nil, [
+            kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
+            kCVPixelBufferWidthKey: 2064 * 2,
+            kCVPixelBufferHeightKey: 2208,
+            kCVPixelBufferMetalCompatibilityKey: true,
+            kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary,
+        ] as CFDictionary, &pixelBufferPool))
+        ciContext = .init(mtlDevice: instance.device)
+        commandQueue = instance.device.makeCommandQueue()!
+        CVMetalTextureCacheCreate(nil, nil, instance.device, nil, &textureCache)
         super.init()
+        commandQueue.label = "XRServerSession:\(self)"
         Self.logger.trace("new instance was made: \(self)")
         XRServer.shared.sessions[port.machPort] = self
         XRServer.shared.bindPortAndSchedule(port: port)
-        encoder.0.delegate = self
-        encoder.1.delegate = self
+        encoder.delegate = self
         websocket.resume()
         // TODO: should wait until websocket opens
         Task {
@@ -80,30 +97,51 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
     }
     
     @objc func createSwapchain() -> XRServerSwapchain {
-        let swapchain = XRServerSwapchain()
+        let swapchain = XRServerSwapchain(session: self)
         return swapchain
     }
     
     @objc func endFrame(info: EndFrameInfo) {
         var info = info
-        withUnsafePointer(to: &encoder) {
-            $0.withMemoryRebound(to: XRVideoEncoder.self, capacity: 2) { encoder in
-                withUnsafePointer(to: &info.eyes) {
-                    $0.withMemoryRebound(to: EndFrameInfoPerEye.self, capacity: 2) { eyes in
-                        for i in 0..<2 {
-                            let swapchainId = eyes[i].swapchain_id
-                            guard let swapchain = XRServer.shared.swapchainsById[swapchainId] else {
-                                Self.logger.error("failed to get eyes[\(i)].swapchain (id=\(swapchainId))")
-                                return
-                            }
-                            guard let ioSurface = swapchain.lastActiveSurface else {
-                                Self.logger.warning("swapchain doesn't have a last active IOSurface")
-                                return
-                            }
-                            encoder[i].handle(ioSurface: ioSurface)
-                        }
+        withUnsafePointer(to: &info.eyes) {
+            $0.withMemoryRebound(to: EndFrameInfoPerEye.self, capacity: 2) { eyes in
+                var images: [Surface] = []
+                var pixelBuffer: CVPixelBuffer?
+                let res = CVPixelBufferPoolCreatePixelBuffer(nil, pixelBufferPool!, &pixelBuffer)
+                precondition(res == kCVReturnSuccess)
+                let buffer = commandQueue.makeCommandBuffer()!
+                let blit = buffer.makeBlitCommandEncoder()!
+                var cvTexture: CVMetalTexture!
+                assert(kCVReturnSuccess == CVMetalTextureCacheCreateTextureFromImage(
+                    nil, textureCache,
+                    pixelBuffer!, nil, .bgra8Unorm, CVPixelBufferGetWidth(pixelBuffer!), CVPixelBufferGetHeight(pixelBuffer!),
+                    0, &cvTexture
+                ))
+                for i in 0..<2 {
+                    let swapchainId = eyes[i].swapchain_id
+                    guard let swapchain = XRServer.shared.swapchainsById[swapchainId] else {
+                        Self.logger.error("failed to get eyes[\(i)].swapchain (id=\(swapchainId))")
+                        return
                     }
+                    guard let ioSurface = swapchain.lastActiveSurface else {
+                        Self.logger.warning("swapchain doesn't have a last active IOSurface")
+                        return
+                    }
+                    let texture = ioSurface.texture
+                    blit.copy(
+                        from: texture,
+                        sourceSlice: 0, sourceLevel: 0,
+                        sourceOrigin: .init(x: 0, y: 0, z: 0),
+                        sourceSize: .init(width: texture.width, height: texture.height, depth: texture.depth),
+                        to: CVMetalTextureGetTexture(cvTexture)!,
+                        destinationSlice: 0, destinationLevel: 0,
+                        destinationOrigin: .init(x: texture.width * i, y: 0, z: 0)
+                    )
                 }
+                blit.endEncoding()
+                buffer.commit()
+                buffer.waitUntilCompleted()
+                encoder.handle(pixelBuffer: pixelBuffer!)
             }
         }
     }

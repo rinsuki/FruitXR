@@ -3,7 +3,7 @@ import { FromBrowserSchema, ToBrowserSchema, VideoCodec, type FromBrowser, type 
 import { parseInitNALUHEVC } from "./utils/hevc_parser.js"
 import { createShaderProgram } from "./shader.js"
 
-class EyeRenderer {
+class IncomingDecoder {
     videoDecoder = this.createNewDecoder()
     parameterSets: Uint8Array[] = []
     ts = 0
@@ -81,10 +81,7 @@ class EyeRenderer {
 }
 
 class Client {
-    eyes = [
-        new EyeRenderer(),
-        new EyeRenderer(),
-    ] as const
+    decoder = new IncomingDecoder()
     gl: WebGLRenderingContext
     glLayer: XRWebGLLayer
     referenceSpace!: XRReferenceSpace
@@ -138,7 +135,7 @@ class Client {
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE)
         this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE)
         this.gl.uniform1i(this.gl.getUniformLocation(program, "sampler0"), 0)
-        this.gl.uniform1f(this.gl.getUniformLocation(this.gl.getParameter(this.gl.CURRENT_PROGRAM), "width"), 1)
+        this.gl.uniform1f(this.gl.getUniformLocation(this.gl.getParameter(this.gl.CURRENT_PROGRAM), "width"), 0.5)
         this.session.requestAnimationFrame(this.raf)
         console.log("webxr started")
     }
@@ -180,13 +177,13 @@ class Client {
             const viewport = this.glLayer.getViewport(view)
             if (viewport == null) continue
             this.gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height)
-            const frame = this.eyes[i++]?.lastFrame
+            const frame = this.decoder.lastFrame
             if (frame != null) {
                 this.gl.activeTexture(this.gl.TEXTURE0)
                 this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, frame.codedWidth, frame.codedHeight, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, null)
                 this.gl.texSubImage2D(this.gl.TEXTURE_2D, 0, 0, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, frame)
             }
-            this.gl.uniform1f(this.gl.getUniformLocation(this.gl.getParameter(this.gl.CURRENT_PROGRAM), "left"), 0)
+            this.gl.uniform1f(this.gl.getUniformLocation(this.gl.getParameter(this.gl.CURRENT_PROGRAM), "left"), (i++) * 0.5)
             this.gl.drawArrays(this.gl.TRIANGLE_FAN, 0, 4)
             this.gl.flush()
         }
@@ -211,7 +208,7 @@ class Client {
                 alert(`Unsupported codec: ${VideoCodec[v.codec]}`)
                 break
             }
-            this.eyes[v.eye]!.configure(v.parameterSets.map(ps => ps!))
+            this.decoder.configure(v.parameterSets.map(ps => ps!))
             console.log(v)
             break
         }
@@ -222,7 +219,7 @@ class Client {
                 break
             }
             // console.log(v.content)
-            this.eyes[v.eye]!.receive(v.content!, v.keyframe)
+            this.decoder.receive(v.content!, v.keyframe)
             break
         }
         default:

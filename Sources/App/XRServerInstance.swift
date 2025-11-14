@@ -5,11 +5,14 @@
 //  Created by user on 2025/11/12.
 //
 
+import Metal
 import OSLog
 
 class XRServerInstance: NSObject {
     static let logger = Logger(subsystem: "net.rinsuki.apps.FruitXR", category: "XRServerInstance")
     let port: NSMachPort
+    // TODO: send it to client and use same GPU
+    let device = MTLCreateSystemDefaultDevice()!
     
     override init() {
         var rawPort: mach_port_t = .init(MACH_PORT_NULL)
@@ -32,7 +35,7 @@ class XRServerInstance: NSObject {
     }
     
     @objc func createSession() -> XRServerSession {
-        let session = XRServerSession()
+        let session = XRServerSession(instance: self)
         return session
     }
 }
