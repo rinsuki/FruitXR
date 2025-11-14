@@ -8,6 +8,7 @@ class EyeRenderer {
     parameterSets: Uint8Array[] = []
     ts = 0
     prev = performance.now()
+    counts = 0
     lastFrame: VideoFrame | null = null
 
     createNewDecoder() {
@@ -20,11 +21,14 @@ class EyeRenderer {
                     this.lastFrame.close()
                 }
                 this.lastFrame = frame
+                this.counts++
 
                 const now = performance.now()
-                const fps = 1000 / (now - this.prev)
-                this.prev = now
-                document.title = `FPS: ${fps.toFixed(2)}`
+                if (now - this.prev >= 1000) {
+                    document.title = `FPS: ${this.counts}`
+                    this.prev = now
+                    this.counts = 0
+                }
             }
         })
     }
