@@ -58,10 +58,18 @@ class EyeRenderer {
             nalContent.set(ps, offset)
             offset += ps.byteLength
         }
-        // wrong way to convert length-prefixed to 0001-prefixed
-        nalContent.set(new Uint8Array([0, 0, 0, 1]), offset)
-        offset += 4
-        nalContent.set(data.subarray(4), offset)
+        // console.log(data)
+        const reader = new DataView(data.buffer, data.byteOffset, data.byteLength)
+        let readerOffset = 0
+        while (readerOffset + 4 <= data.byteLength) {
+            const nalSize = reader.getUint32(readerOffset)
+            nalContent.set(new Uint8Array([0, 0, 0, 1]), offset)
+            offset += 4
+            readerOffset += 4
+            nalContent.set(new Uint8Array(data.buffer, data.byteOffset + readerOffset, nalSize), offset)
+            offset += nalSize
+            readerOffset += nalSize
+        }
         const isKey = this.parameterSets.length ? true : false
         this.parameterSets = []
         this.videoDecoder.decode(new EncodedVideoChunk({
