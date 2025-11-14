@@ -49,13 +49,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
-    
-    @objc func createServerSwapchainObject() -> Int32 {
-        swapchainCreatedCount += 1
-        let swapchain = XRServerSwapchain()
-        swapchains[swapchainCreatedCount] = swapchain
-        
-        return swapchainCreatedCount
-    }
-
 }
