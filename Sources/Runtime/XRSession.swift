@@ -162,9 +162,7 @@ class XRSession {
     
     func waitFrame(waitInfo: XrFrameWaitInfo, frameState: inout XrFrameState) -> XrResult {
         print("STUB: xrWaitFrame(\(self), \(waitInfo), \(frameState))")
-        usleep(1_000_000 / 120) // TODO: stub
         frameState.shouldRender = .init(XR_TRUE) // TODO: stub
-        FI_C_SessionGetCurrentInfo(port, &currentHeadsetInfo)
         return XR_SUCCESS
     }
     
@@ -221,6 +219,8 @@ class XRSession {
 
         state.viewStateFlags = XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT
         
+        FI_C_SessionGetCurrentInfo(port, &currentHeadsetInfo)
+
         for i in 0..<Int(viewCount) {
             func convertDegreesToRadians(degree: Float) -> Float {
                 return degree * .pi / 180
