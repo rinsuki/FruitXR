@@ -12,4 +12,4 @@ jobs:
       with:
         submodules: true
     - run: brew install swift-protobuf
-    - run: xcodebuild -skipPackagePluginValidation
+    - run: set -o pipefail && xcodebuild -skipPackagePluginValidation | xcpretty -c
