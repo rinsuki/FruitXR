@@ -75,6 +75,22 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                     currentInfo.hmd.orientation.y = cp.hmd.orientation.y
                     currentInfo.hmd.orientation.z = cp.hmd.orientation.z
                     currentInfo.hmd.orientation.w = cp.hmd.orientation.w
+                    
+                    currentInfo.leftEye.position.x = cp.leftEye.position.x
+                    currentInfo.leftEye.position.y = cp.leftEye.position.y
+                    currentInfo.leftEye.position.z = cp.leftEye.position.z
+                    currentInfo.leftEye.orientation.x = cp.leftEye.orientation.x
+                    currentInfo.leftEye.orientation.y = cp.leftEye.orientation.y
+                    currentInfo.leftEye.orientation.z = cp.leftEye.orientation.z
+                    currentInfo.leftEye.orientation.w = cp.leftEye.orientation.w
+
+                    currentInfo.rightEye.position.x = cp.rightEye.position.x
+                    currentInfo.rightEye.position.y = cp.rightEye.position.y
+                    currentInfo.rightEye.position.z = cp.rightEye.position.z
+                    currentInfo.rightEye.orientation.x = cp.rightEye.orientation.x
+                    currentInfo.rightEye.orientation.y = cp.rightEye.orientation.y
+                    currentInfo.rightEye.orientation.z = cp.rightEye.orientation.z
+                    currentInfo.rightEye.orientation.w = cp.rightEye.orientation.w
                 }
             }
         } catch {

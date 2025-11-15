@@ -149,24 +149,36 @@ class Client {
             return
         }
 
+        let leftTransform: XRRigidTransform | null = null
+        let rightTransform: XRRigidTransform | null = null
+
+        for (const view of pose.views) {
+            if (view.eye === "left") {
+                if (leftTransform != null) {
+                    alert("did you have two left eyes??")
+                    return
+                }
+                leftTransform = view.transform
+            } else if (view.eye === "right") {
+                if (rightTransform != null) {
+                    alert("did you have two right eyes??")
+                    return
+                }
+                rightTransform = view.transform
+            } else {
+                alert(`unknown eye: ${view.eye}`)
+                return
+            }
+        }
+
         // TODO: send poses
         this.sendMessage({
             message: {
                 case: "currentPosition",
                 value: {
-                    hmd: {
-                        position: {
-                            x: pose.transform.position.x,
-                            y: pose.transform.position.y,
-                            z: pose.transform.position.z,
-                        },
-                        orientation: {
-                            x: pose.transform.orientation.x,
-                            y: pose.transform.orientation.y,
-                            z: pose.transform.orientation.z,
-                            w: pose.transform.orientation.w,
-                        }
-                    }
+                    hmd: pose.transform,
+                    leftEye: leftTransform ?? undefined,
+                    rightEye: rightTransform ?? undefined,
                 }
             }
         })

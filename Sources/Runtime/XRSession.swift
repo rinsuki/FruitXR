@@ -231,18 +231,17 @@ class XRSession {
                 angleUp: convertDegreesToRadians(degree: 43.98),
                 angleDown: convertDegreesToRadians(degree: -54.27)
             )
-            let ipd: Float = 63.0 / 1000
+            let transform = i == 0 ? currentHeadsetInfo.leftEye : currentHeadsetInfo.rightEye
             views[i].pose.position = .init(
-                // TODO: is it correct??
-                x: (i == 0 ? (-ipd/2.0) : (ipd/2.0)) + currentHeadsetInfo.hmd.position.x,
-                y: currentHeadsetInfo.hmd.position.y,
-                z: currentHeadsetInfo.hmd.position.z
+                x: transform.position.x,
+                y: transform.position.y,
+                z: transform.position.z
             )
             views[i].pose.orientation = .init(
-                x: currentHeadsetInfo.hmd.orientation.x,
-                y: currentHeadsetInfo.hmd.orientation.y,
-                z: currentHeadsetInfo.hmd.orientation.z,
-                w: currentHeadsetInfo.hmd.orientation.w
+                x: transform.orientation.x,
+                y: transform.orientation.y,
+                z: transform.orientation.z,
+                w: transform.orientation.w
             )
         }
         
