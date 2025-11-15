@@ -170,6 +170,14 @@ class Client {
                 return
             }
         }
+        if (leftTransform == null) {
+            alert("left eye transform is null")
+            return
+        }
+        if (rightTransform == null) {
+            alert("right eye transform is null")
+            return
+        }
 
         // TODO: send poses
         this.sendMessage({
@@ -177,8 +185,8 @@ class Client {
                 case: "currentPosition",
                 value: {
                     hmd: pose.transform,
-                    leftEye: leftTransform ?? undefined,
-                    rightEye: rightTransform ?? undefined,
+                    leftEye: leftTransform,
+                    rightEye: rightTransform,
                 }
             }
         })
