@@ -1,3 +1,5 @@
+name: Build
+
 on:
   push:
     branches:
@@ -13,4 +15,4 @@ jobs:
       with:
         submodules: true
     - run: brew install swift-protobuf
-    - run: set -o pipefail && xcodebuild -skipPackagePluginValidation | xcpretty -c
+    - run: set -o pipefail && xcodebuild -skipPackagePluginValidation -configuration Release | xcpretty -c
