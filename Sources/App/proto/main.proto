@@ -59,4 +59,6 @@ message FBCurrentPosition {
     Transform hmd = 1;
     Transform leftEye = 2;
     Transform rightEye = 3;
+    Transform leftController = 4;
+    Transform rightController = 5;
 }

@@ -38,6 +38,8 @@ typedef struct {
     Transform hmd;
     Transform leftEye;
     Transform rightEye;
+    Transform leftController;
+    Transform rightController;
 } CurrentHeadsetInfo;
 
-_Static_assert(sizeof(CurrentHeadsetInfo) == (sizeof(float) * 21), "CurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");
+_Static_assert(sizeof(CurrentHeadsetInfo) == (sizeof(float) * 35), "CurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");

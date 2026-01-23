@@ -1,5 +1,5 @@
 import { create, fromBinary, toBinary, type MessageInitShape } from "@bufbuild/protobuf"
-import { FromBrowserSchema, ToBrowserSchema, VideoCodec, type FromBrowser, type ToBrowser } from "./gen/main_pb.js"
+import { FBCurrentPositionSchema, FromBrowserSchema, ToBrowserSchema, VideoCodec, type FBCurrentPosition, type FromBrowser, type ToBrowser } from "./gen/main_pb.js"
 import { parseInitNALUHEVC } from "./utils/hevc_parser.js"
 import { createShaderProgram } from "./shader.js"
 
@@ -179,15 +179,26 @@ class Client {
             return
         }
 
-        // TODO: send poses
+        let currentPositionValue: MessageInitShape<typeof FBCurrentPositionSchema> = {
+            hmd: pose.transform,
+            leftEye: leftTransform,
+            rightEye: rightTransform,
+        }
+        for (const source of this.session.inputSources) {
+            if (source.gripSpace == null) continue
+            const pose = frame.getPose(source.gripSpace, this.referenceSpace)
+            if (pose == null) continue
+            if (source.handedness === "left") {
+                currentPositionValue.leftController = pose.transform
+            } else if (source.handedness === "right") {
+                currentPositionValue.rightController = pose.transform
+            }
+        }
+        console.log(JSON.stringify(currentPositionValue))
         this.sendMessage({
             message: {
                 case: "currentPosition",
-                value: {
-                    hmd: pose.transform,
-                    leftEye: leftTransform,
-                    rightEye: rightTransform,
-                }
+                value: currentPositionValue,
             }
         })
         
