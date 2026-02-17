@@ -20,7 +20,7 @@ class XRSpace {
     }
     
     func locate(baseSpace: XRSpace?, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
-        print("STUB: XRSpace.locate(self=\(self), \(baseSpace), \(time), \(spaceLocation))")
+        print("STUB: XRSpace.locate(self=\(self), base=\(baseSpace), \(time), \(spaceLocation))")
         spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
         spaceLocation.pose.position = .init(x: 0, y: 0, z: 0)
         spaceLocation.pose.orientation = .init(x: 0, y: 0, z: 0, w: 1)
@@ -83,7 +83,7 @@ func xrCreateReferenceSpace(session: XrSession?, createInfo: UnsafePointer<XrRef
     let ptr = Unmanaged.passRetained(space).toOpaque()
     spacePtr!.pointee = OpaquePointer(ptr)
     
-    print("STUB: xrCreateReferenceSpace(\(session), \(createInfo?.pointee))")
+    print("STUB: xrCreateReferenceSpace(\(session), \(createInfo?.pointee.poseInReferenceSpace))")
     
     return XR_SUCCESS
 }
