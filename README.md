@@ -19,9 +19,20 @@ at this time, only you can do is see Swapchain, so you probably don't want to ru
 
 ## How to Run
 
+* `brew install pnpm node`
+* Clone (with submodules)
+* `pnpm install`
+* `pnpm run build`
+* Run those commands in terminal:
+  * `pnpm vite`
+  * `pnpm tsimp mirror-server.ts`
 * Open ./FruitXR.xcodeproj
 * Run
   * (WARNING: current OpenXR runtime (`/usr/local/share/openxr/1/active_runtime.json`) will be overwritten without consent for now)
+* Port-forward both `5173` and `18034` port to your HMD from Mac
+* Open `http://localhost:5173` on your HMD
+
+technically any HMD which supports WebCodecs and WebXR should work, but currently only Meta Quest 3 is supported, because some values are hardcoded to the codebase.
 
 ## Questions
 

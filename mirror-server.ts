@@ -31,3 +31,7 @@ server.on("connection", (ws, req) => {
     })
   }
 })
+
+server.on("listening", () => {
+  console.log(`WebSocket server is now listening`)
+})
