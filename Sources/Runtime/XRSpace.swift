@@ -28,11 +28,14 @@ func xrCreateActionSpace(session: XrSession?, createInfo: UnsafePointer<XrAction
         return XR_ERROR_HANDLE_INVALID
     }
     
+    let actionPtr = createInfo?.pointee.action
+    let action = Unmanaged<XRAction>.fromOpaque(.init(actionPtr!)).takeUnretainedValue()
+    
     let space = XRSpace()
     let ptr = Unmanaged.passRetained(space).toOpaque()
     spacePtr!.pointee = OpaquePointer(ptr)
     
-    print("STUB: xrCreateActionSpace(\(session), \(createInfo?.pointee))")
+    print("STUB: xrCreateActionSpace(\(session), \(action), \(createInfo?.pointee))")
     
     return XR_SUCCESS
 }
