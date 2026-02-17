@@ -6,12 +6,13 @@
 //
 
 nonisolated(unsafe) var xrRegisteredPaths: [String] = [
+    "", // dummy, since Unity thinks 0 is invalid XrPath
     "/user/hand/left",
     "/user/hand/right",
 ]
 
-let XR_PATH_USER_HAND_LEFT: XrPath = 0
-let XR_PATH_USER_HAND_RIGHT: XrPath = 1
+let XR_PATH_USER_HAND_LEFT: XrPath = 1
+let XR_PATH_USER_HAND_RIGHT: XrPath = 2
 
 func xrStringToPath(instance: XrInstance?, pathString: UnsafePointer<CChar>?, pathPtr: UnsafeMutablePointer<XrPath>?) -> XrResult {
     guard let instance else {
