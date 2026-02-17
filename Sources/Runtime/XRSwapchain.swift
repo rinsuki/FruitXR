@@ -99,7 +99,7 @@ class XRSwapchain {
             imagesRaw.withMemoryRebound(to: XrSwapchainImageMetalKHR.self, capacity: images.count) { metalImages in
                 for i in 0..<textures.count {
                     metalImages[i].texture = Unmanaged.passUnretained(textures[i]).toOpaque()
-                }
+               }
             }
             imageCount = .init(textures.count)
         }
@@ -108,19 +108,19 @@ class XRSwapchain {
     }
     
     func acquireImage(info: XrSwapchainImageAcquireInfo?, index: inout UInt32) -> XrResult {
-        print("STUB: XRSwapchain.acquireImage(\(info), \(index))")
+        // print("STUB: XRSwapchain.acquireImage(\(info), \(index))")
         currentTextureIndex += 1
         index = .init(currentTextureIndex % ioSurfaces.count)
         return XR_SUCCESS
     }
     
     func waitImage(info: XrSwapchainImageWaitInfo?) -> XrResult {
-        print("STUB: XRSwapchain.waitImage(\(info))")
+        // print("STUB: XRSwapchain.waitImage(\(info))")
         return XR_SUCCESS
     }
 
     func releaseImage(info: XrSwapchainImageReleaseInfo?) -> XrResult {
-        print("STUB: XRSwapchain.releaseImage(\(info))")
+        // print("STUB: XRSwapchain.releaseImage(\(info))")
         assert(FI_C_SwapchainSwitch(port, Int32(currentTextureIndex % ioSurfaces.count)) == KERN_SUCCESS)
         return XR_SUCCESS
     }
