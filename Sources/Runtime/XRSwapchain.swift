@@ -48,6 +48,12 @@ class XRSwapchain {
                     metalPixelFormat = .bgra8Unorm_srgb
                     IOSurfaceSetValue(ioSurface, "IOSurfaceColorSpace" as CFString, CGColorSpace.sRGB)
                     break
+                case .bgra8Unorm:
+                    // its ok
+                    break
+                case .bgra8Unorm_srgb:
+                    IOSurfaceSetValue(ioSurface, "IOSurfaceColorSpace" as CFString, CGColorSpace.sRGB)
+                    break
                 default:
                     fatalError() // TODO: return error properly
                 }
