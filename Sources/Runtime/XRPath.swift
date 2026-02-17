@@ -5,7 +5,13 @@
 //  Created by user on 2025/03/23.
 //
 
-nonisolated(unsafe) var xrRegisteredPaths: [String] = []
+nonisolated(unsafe) var xrRegisteredPaths: [String] = [
+    "/user/hand/left",
+    "/user/hand/right",
+]
+
+let XR_PATH_USER_HAND_LEFT: XrPath = 0
+let XR_PATH_USER_HAND_RIGHT: XrPath = 1
 
 func xrStringToPath(instance: XrInstance?, pathString: UnsafePointer<CChar>?, pathPtr: UnsafeMutablePointer<XrPath>?) -> XrResult {
     guard let instance else {
@@ -19,9 +25,12 @@ func xrStringToPath(instance: XrInstance?, pathString: UnsafePointer<CChar>?, pa
     }
     let path = String(cString: pathString)
     
-    print("STUB: xrStringToPath(\(instanceObj), \(path))")
+    if let currentPath = xrRegisteredPaths.firstIndex(of: path) {
+        pathPtr!.pointee = .init(currentPath)
+        return XR_SUCCESS
+    }
+
     xrRegisteredPaths.append(path)
-    
     pathPtr!.pointee = .init(xrRegisteredPaths.count - 1)
     
     return XR_SUCCESS
