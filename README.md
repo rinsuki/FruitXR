@@ -23,9 +23,11 @@ at this time, only you can do is see Swapchain, so you probably don't want to ru
 * Clone (with submodules)
 * `pnpm install`
 * `pnpm run build`
-* Run those commands in terminal:
+* Run those commands in terminal (you would need to open two tab/pane/window):
   * `pnpm vite`
+    * Serves WebXR frontend
   * `pnpm tsimp mirror-server.ts`
+    * Serves relay server between WebXR and FruitXR
 * Open ./FruitXR.xcodeproj
 * Run
   * (WARNING: current OpenXR runtime (`/usr/local/share/openxr/1/active_runtime.json`) will be overwritten without consent for now)
