@@ -5,11 +5,19 @@
 //  Created by user on 2025/03/23.
 //
 
-class XRAction {
+class XRAction: CustomStringConvertible {
     let actionSet: XRActionSet
+    let name: String
+    let paths: [String]
     
-    init(actionSet: XRActionSet) {
+    init(actionSet: XRActionSet, name: String, paths: [String]) {
         self.actionSet = actionSet
+        self.name = name
+        self.paths = paths
+    }
+    
+    var description: String {
+        return "<XRAction: \(String(format: "%p", unsafeBitCast(self, to: Int.self))), name=\(name), paths=\(paths)>"
     }
     
     func destroy() {
@@ -23,8 +31,19 @@ func xrCreateAction(actionSet: XrActionSet?, createInfo: UnsafePointer<XrActionC
     }
     
     let actionSetObj = Unmanaged<XRActionSet>.fromOpaque(.init(actionSet)).takeUnretainedValue()
+    var paths: [String] = []
+    for i in 0..<createInfo!.pointee.countSubactionPaths {
+        let pathPtr = createInfo!.pointee.subactionPaths.advanced(by: Int(i)).pointee
+        let path = xrRegisteredPaths[Int(pathPtr)]
+        paths.append(path)
+    }
     
-    let action = XRAction(actionSet: actionSetObj)
+    var createInfo = createInfo!.pointee
+    // TODO: feels unsafe
+    let name = withUnsafeBytes(of: &createInfo.actionName) { ptr in
+        return String(cString: ptr.bindMemory(to: CChar.self).baseAddress!)
+    }
+    let action = XRAction(actionSet: actionSetObj, name: name, paths: paths)
     let ptr = Unmanaged.passRetained(action).toOpaque()
     actionPtr!.pointee = OpaquePointer(ptr)
     

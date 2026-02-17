@@ -5,7 +5,7 @@
 //  Created by user on 2025/03/23.
 //
 
-nonisolated(unsafe) var paths: [String] = []
+nonisolated(unsafe) var xrRegisteredPaths: [String] = []
 
 func xrStringToPath(instance: XrInstance?, pathString: UnsafePointer<CChar>?, pathPtr: UnsafeMutablePointer<XrPath>?) -> XrResult {
     guard let instance else {
@@ -20,9 +20,9 @@ func xrStringToPath(instance: XrInstance?, pathString: UnsafePointer<CChar>?, pa
     let path = String(cString: pathString)
     
     print("STUB: xrStringToPath(\(instanceObj), \(path))")
-    paths.append(path)
+    xrRegisteredPaths.append(path)
     
-    pathPtr!.pointee = .init(paths.count - 1)
+    pathPtr!.pointee = .init(xrRegisteredPaths.count - 1)
     
     return XR_SUCCESS
 }
@@ -34,11 +34,11 @@ func xrPathToString(instance: XrInstance?, path: XrPath, bufferCapacityInput: UI
     
     let instanceObj = Unmanaged<XRInstance>.fromOpaque(.init(instance)).takeUnretainedValue()
     
-    guard path < paths.count else {
+    guard path < xrRegisteredPaths.count else {
         return XR_ERROR_PATH_INVALID
     }
     
-    let pathString = paths[Int(path)]
+    let pathString = xrRegisteredPaths[Int(path)]
     
     print("STUB: xrPathToString(\(instanceObj), \(path), \(bufferCapacityInput))")
     
