@@ -8,16 +8,16 @@
 class XRAction: CustomStringConvertible {
     let actionSet: XRActionSet
     let name: String
-    let paths: [String]
+    let paths: [XrPath]
     
-    init(actionSet: XRActionSet, name: String, paths: [String]) {
+    init(actionSet: XRActionSet, name: String, paths: [XrPath]) {
         self.actionSet = actionSet
         self.name = name
         self.paths = paths
     }
     
     var description: String {
-        return "<XRAction: \(String(format: "%p", unsafeBitCast(self, to: Int.self))), name=\(name), paths=\(paths)>"
+        return "<XRAction: \(String(format: "%p", unsafeBitCast(self, to: Int.self))), name=\(name), paths=\(paths.map { xrRegisteredPaths[Int($0)] })>"
     }
     
     func destroy() {
@@ -31,11 +31,10 @@ func xrCreateAction(actionSet: XrActionSet?, createInfo: UnsafePointer<XrActionC
     }
     
     let actionSetObj = Unmanaged<XRActionSet>.fromOpaque(.init(actionSet)).takeUnretainedValue()
-    var paths: [String] = []
+    var paths: [XrPath] = []
     for i in 0..<createInfo!.pointee.countSubactionPaths {
         let pathPtr = createInfo!.pointee.subactionPaths.advanced(by: Int(i)).pointee
-        let path = xrRegisteredPaths[Int(pathPtr)]
-        paths.append(path)
+        paths.append(pathPtr)
     }
     
     var createInfo = createInfo!.pointee

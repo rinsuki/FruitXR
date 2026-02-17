@@ -9,10 +9,17 @@ import Foundation
 
 class XRSpace {
     let session: XRSession
+    let pose: XrPosef
+
     private(set) var destroyed = false
     
-    init(session: XRSession) {
+    init(session: XRSession, pose: XrPosef) {
         self.session = session
+        self.pose = pose
+    }
+
+    deinit {
+        assert(destroyed)
     }
     
     func destroy() {
@@ -21,7 +28,7 @@ class XRSpace {
     
     func locate(baseSpace: XRSpace?, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
         print("STUB: XRSpace.locate(self=\(self), base=\(baseSpace), \(time), \(spaceLocation))")
-        spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT
+        spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
         spaceLocation.pose.position = .init(x: 0, y: 0, z: 0)
         spaceLocation.pose.orientation = .init(x: 0, y: 0, z: 0, w: 1)
         return XR_SUCCESS
@@ -30,14 +37,33 @@ class XRSpace {
 
 class XRActionSpace: XRSpace, CustomStringConvertible {
     let action: XRAction
+    let subpath: XrPath
     
-    init(session: XRSession, action: XRAction) {
+    init(session: XRSession, pose: XrPosef, action: XRAction, subpath: XrPath) {
         self.action = action
-        super.init(session: session)
+        self.subpath = subpath
+        super.init(session: session, pose: pose)
     }
 
     var description: String {
         return "XRActionSpace(action=\(action))"
+    }
+
+    override func locate(baseSpace: XRSpace?, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
+        switch subpath {
+        case XR_PATH_USER_HAND_LEFT:
+            spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
+            spaceLocation.pose.position = .init(x: session.currentHeadsetInfo.leftController.position.x, y: session.currentHeadsetInfo.leftController.position.y, z: session.currentHeadsetInfo.leftController.position.z)
+            spaceLocation.pose.orientation = .init(x: session.currentHeadsetInfo.leftController.orientation.x, y: session.currentHeadsetInfo.leftController.orientation.y, z: session.currentHeadsetInfo.leftController.orientation.z, w: session.currentHeadsetInfo.leftController.orientation.w)
+        case XR_PATH_USER_HAND_RIGHT:
+            spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
+            spaceLocation.pose.position = .init(x: session.currentHeadsetInfo.rightController.position.x, y: session.currentHeadsetInfo.rightController.position.y, z: session.currentHeadsetInfo.rightController.position.z)
+            spaceLocation.pose.orientation = .init(x: session.currentHeadsetInfo.rightController.orientation.x, y: session.currentHeadsetInfo.rightController.orientation.y, z: session.currentHeadsetInfo.rightController.orientation.z, w: session.currentHeadsetInfo.rightController.orientation.w)
+        default:
+            spaceLocation.locationFlags = 0
+        }
+        // TODO: care about baseSpace and pose
+        return XR_SUCCESS
     }
 }
 
@@ -50,8 +76,12 @@ func xrCreateActionSpace(session: XrSession?, createInfo: UnsafePointer<XrAction
     
     let actionPtr = createInfo?.pointee.action
     let action = Unmanaged<XRAction>.fromOpaque(.init(actionPtr!)).takeUnretainedValue()
+
+    if createInfo!.pointee.subactionPath != XR_NULL_PATH, !action.paths.contains(createInfo!.pointee.subactionPath) {
+        return XR_ERROR_PATH_UNSUPPORTED
+    }
     
-    let space = XRActionSpace(session: sessionObj, action: action)
+    let space = XRActionSpace(session: sessionObj, pose: createInfo!.pointee.poseInActionSpace, action: action, subpath: createInfo!.pointee.subactionPath)
     let ptr = Unmanaged.passRetained(space).toOpaque()
     spacePtr!.pointee = OpaquePointer(ptr)
     
@@ -63,13 +93,13 @@ func xrCreateActionSpace(session: XrSession?, createInfo: UnsafePointer<XrAction
 class XRReferenceSpace: XRSpace, CustomStringConvertible {
     let referenceSpaceType: XrReferenceSpaceType
     
-    init(session: XRSession, referenceSpaceType: XrReferenceSpaceType) {
+    init(session: XRSession, pose: XrPosef, referenceSpaceType: XrReferenceSpaceType) {
         self.referenceSpaceType = referenceSpaceType
-        super.init(session: session)
+        super.init(session: session, pose: pose)
     }
     
     var description: String {
-        return "XRReferenceSpace(type=\(referenceSpaceType))"
+        return "XRReferenceSpace(type=\(referenceSpaceType), pose=\(pose))"
     }
 }
 
@@ -79,11 +109,9 @@ func xrCreateReferenceSpace(session: XrSession?, createInfo: UnsafePointer<XrRef
     }
     
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
-    let space = XRReferenceSpace(session: sessionObj, referenceSpaceType: createInfo!.pointee.referenceSpaceType)
+    let space = XRReferenceSpace(session: sessionObj, pose: createInfo!.pointee.poseInReferenceSpace, referenceSpaceType: createInfo!.pointee.referenceSpaceType)
     let ptr = Unmanaged.passRetained(space).toOpaque()
     spacePtr!.pointee = OpaquePointer(ptr)
-    
-    print("STUB: xrCreateReferenceSpace(\(session), \(createInfo?.pointee.poseInReferenceSpace))")
     
     return XR_SUCCESS
 }

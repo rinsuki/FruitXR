@@ -6,7 +6,7 @@
 //
 
 nonisolated(unsafe) var xrRegisteredPaths: [String] = [
-    "", // dummy, since Unity thinks 0 is invalid XrPath
+    "", // XR_NULL_PATH
     "/user/hand/left",
     "/user/hand/right",
 ]
