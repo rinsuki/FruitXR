@@ -211,10 +211,10 @@ class XRSession {
     }
     
     func locateViews(locateInfo: XrViewLocateInfo, state: inout XrViewState, views: UnsafeMutableBufferPointer<XrView>, viewCount: inout UInt32) -> XrResult {
-        print("STUB: xrLocateViews(\(self), \(locateInfo), \(views), \(viewCount))")
+        // print("STUB: xrLocateViews(\(self), \(locateInfo), \(views), \(viewCount))")
         viewCount = 2
         guard views.count >= viewCount else {
-            return XR_SUCCESS
+            return XR_ERROR_SIZE_INSUFFICIENT
         }
 
         state.viewStateFlags = XR_VIEW_STATE_POSITION_VALID_BIT | XR_VIEW_STATE_ORIENTATION_VALID_BIT
