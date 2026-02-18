@@ -255,7 +255,7 @@ class XRSession {
     
     func getCurrentInteractionProfile(topLevelUserPath: XrPath, interactionProfile: inout XrInteractionProfileState) -> XrResult {
         print("STUB: xrGetCurrentInteractionProfile(\(self), \(topLevelUserPath), \(interactionProfile))")
-        interactionProfile.interactionProfile = .init(XR_NULL_PATH)
+        interactionProfile.interactionProfile = .init(XR_PATH_OCULUS_TOUCH_CONTROLLER)
         return XR_SUCCESS
     }
     

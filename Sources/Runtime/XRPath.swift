@@ -9,10 +9,12 @@ nonisolated(unsafe) var xrRegisteredPaths: [String] = [
     "", // XR_NULL_PATH
     "/user/hand/left",
     "/user/hand/right",
+    "/interaction_profiles/oculus/touch_controller",
 ]
 
 let XR_PATH_USER_HAND_LEFT: XrPath = 1
 let XR_PATH_USER_HAND_RIGHT: XrPath = 2
+let XR_PATH_OCULUS_TOUCH_CONTROLLER: XrPath = 3
 
 func xrStringToPath(instance: XrInstance?, pathString: UnsafePointer<CChar>?, pathPtr: UnsafeMutablePointer<XrPath>?) -> XrResult {
     guard let instance else {
