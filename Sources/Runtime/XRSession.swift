@@ -121,7 +121,7 @@ class XRSession {
     }
     
     func beginSession(info: XrSessionBeginInfo) -> XrResult {
-        print("STUB: xrBeginSession(\(self), \(info))")
+        print("STUB: xrBeginSession(\(self), \(info))") 
         if !sessionStarted {
             sessionStarted = true
             instance.push(event: .stateChanged(self, XR_SESSION_STATE_SYNCHRONIZED))
@@ -168,8 +168,11 @@ class XRSession {
     }
     
     func waitFrame(waitInfo: XrFrameWaitInfo, frameState: inout XrFrameState) -> XrResult {
-        print("STUB: xrWaitFrame(\(self), \(waitInfo), \(frameState))")
-        frameState.shouldRender = .init(XR_TRUE) // TODO: stub
+        print("STUB: xrWaitFrame(\(self), \(waitInfo), \(frameState))") 
+        // TODO: these are stub
+        // frameState.predictedDisplayTime = .init(clock_gettime_nsec_np(CLOCK_UPTIME_RAW))
+        // frameState.predictedDisplayPeriod = 1_000_000_000 / 120
+        frameState.shouldRender = .init(XR_TRUE)
         return XR_SUCCESS
     }
     
@@ -262,7 +265,12 @@ class XRSession {
     
     func getCurrentInteractionProfile(topLevelUserPath: XrPath, interactionProfile: inout XrInteractionProfileState) -> XrResult {
         print("STUB: xrGetCurrentInteractionProfile(\(self), \(topLevelUserPath), \(interactionProfile))")
-        interactionProfile.interactionProfile = .init(XR_PATH_OCULUS_TOUCH_CONTROLLER)
+        switch topLevelUserPath {
+        case XR_PATH_USER_HAND_LEFT, XR_PATH_USER_HAND_RIGHT:
+            interactionProfile.interactionProfile = .init(XR_PATH_OCULUS_TOUCH_CONTROLLER)
+        default:
+            return XR_ERROR_PATH_UNSUPPORTED
+        }
         return XR_SUCCESS
     }
     
