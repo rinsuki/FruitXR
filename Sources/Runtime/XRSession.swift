@@ -144,9 +144,10 @@ class XRSession {
         return XR_SUCCESS
     }
     
-    func getActionState(info: XrActionStateGetInfo, pose: inout XrActionStatePose) -> XrResult {
-        print("STUB: xrGetActionStatePose(\(self), \(info), \(pose))")
-        pose.isActive = .init(XR_FALSE)
+    func getActionState(info: XrActionStateGetInfo, pose: inout XrActionStatePose) -> XrResult { 
+        let actionObj = Unmanaged<XRAction>.fromOpaque(.init(info.action)).takeUnretainedValue()
+        print("STUB: xrGetActionStatePose(\(self), \(info) (action=\(actionObj)), \(pose))")
+        pose.isActive = .init(XR_TRUE)
         
         return XR_SUCCESS
     }
