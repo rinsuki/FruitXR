@@ -12,8 +12,8 @@ private let VALID_SYSTEM_ID: XrSystemId = 1
 
 class XRInstance {
     enum Event {
-        case ready(XRSession)
-    }
+        case stateChanged(XRSession, XrSessionState)
+    } 
 
     var port: NSMachPort?
     
@@ -174,7 +174,7 @@ class XRInstance {
     }
     
     func suggestInteractionProfileBindings(suggestedBindings: XrInteractionProfileSuggestedBinding) -> XrResult {
-        print("STUB: suggestInteractionProfileBindings(\(suggestedBindings))")
+        print("STUB: xrSuggestInteractionProfileBindings(\(suggestedBindings)), path=\(xrRegisteredPaths[.init(suggestedBindings.interactionProfile)])")
         return XR_SUCCESS
     }
     
@@ -201,12 +201,12 @@ class XRInstance {
         }
         let ourEvent = queuedEvents.removeFirst()
         switch ourEvent {
-        case .ready(let session):
+        case .stateChanged(let session, let state):
             event.withMemoryRebound(to: XrEventDataSessionStateChanged.self, capacity: 1) { pointer in
                 pointer.pointee.type = XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED
                 pointer.pointee.next = nil
                 pointer.pointee.session = .init(Unmanaged.passUnretained(session).toOpaque())
-                pointer.pointee.state = XR_SESSION_STATE_READY
+                pointer.pointee.state = state
                 pointer.pointee.time = 0
             }
         }

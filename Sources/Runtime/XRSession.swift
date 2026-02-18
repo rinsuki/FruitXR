@@ -14,6 +14,7 @@ class XRSession {
     let graphicsAPI: GraphicsAPI
     private(set) var destroyed = false
     var currentHeadsetInfo = CurrentHeadsetInfo()
+     var sessionStarted = false
 
     enum GraphicsAPI {
         case metal(commandQueue: MTLCommandQueue)
@@ -58,7 +59,7 @@ class XRSession {
         }
         
         let session = XRSession(instance: instance, graphicsAPI: graphicsAPI, port: port)
-        instance.push(event: .ready(session))
+        instance.push(event: .stateChanged(session, XR_SESSION_STATE_READY))
         return .success(session)
     }
     
@@ -121,6 +122,12 @@ class XRSession {
     
     func beginSession(info: XrSessionBeginInfo) -> XrResult {
         print("STUB: xrBeginSession(\(self), \(info))")
+        if !sessionStarted {
+            sessionStarted = true
+            instance.push(event: .stateChanged(self, XR_SESSION_STATE_SYNCHRONIZED))
+            instance.push(event: .stateChanged(self, XR_SESSION_STATE_VISIBLE))
+            instance.push(event: .stateChanged(self, XR_SESSION_STATE_FOCUSED))
+        }
         return XR_SUCCESS
     }
     
