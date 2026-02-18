@@ -44,7 +44,8 @@ typedef struct {
 #define HC_BUTTON_THUMBREST_TOUCH (1 << 7)
 
 typedef struct {
-    IPCTransform transform;
+    IPCTransform pointerTransform;
+    IPCTransform gripTransform;
     float thumbstick_x;
     float thumbstick_y;
     float trigger;
@@ -61,6 +62,7 @@ typedef struct {
 } IPCCurrentHeadsetInfo;
 
 // Transform = 7
-// Controller = Transform + 5 = 12
-// 7*3 + 12*2 = 45
-_Static_assert(sizeof(IPCCurrentHeadsetInfo) == (sizeof(float) * 45), "IPCCurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");
+// Controller = Transform*2 + 5 = 19
+// 7*3 = 21
+// 21 + 19*2 = 59
+_Static_assert(sizeof(IPCCurrentHeadsetInfo) == (sizeof(float) * 59), "IPCCurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");

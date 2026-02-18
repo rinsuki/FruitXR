@@ -188,8 +188,11 @@ class Client {
         }
         for (const source of this.session.inputSources) {
             if (source.gripSpace == null) continue
-            const pose = frame.getPose(source.gripSpace, this.referenceSpace)
-            if (pose == null) continue
+            const pointerPose = frame.getPose(source.targetRaySpace, this.referenceSpace)
+            if (pointerPose == null) continue
+            const gripPose = frame.getPose(source.gripSpace, this.referenceSpace)
+            if (gripPose == null) continue
+
             let key: "leftController" | "rightController"
             if (source.handedness === "left") {
                 key = "leftController"
@@ -198,8 +201,10 @@ class Client {
             } else {
                 continue
             }
+
             currentPositionValue[key] = {
-                transform: pose.transform,
+                pointerTransform: pointerPose.transform,
+                gripTransform: gripPose.transform,
                 stickX: source.gamepad?.axes[2] ?? 0,
                 stickY: source.gamepad?.axes[3] ?? 0,
                 trigger: source.gamepad?.buttons[0]?.value ?? 0,

@@ -56,7 +56,8 @@ message Transform {
 }
 
 message HandController {
-    Transform transform = 1;
+    Transform pointerTransform = 7;
+    Transform gripTransform = 1;
     float stick_x = 2;
     float stick_y = 3;
     float squeeze = 4;

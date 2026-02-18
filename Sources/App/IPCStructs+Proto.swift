@@ -24,7 +24,8 @@ extension IPCOrientation {
 
 extension IPCHandController {
     mutating func set(from proto: HandController) {
-        self.transform.set(from: proto.transform)
+        self.pointerTransform.set(from: proto.pointerTransform)
+        self.gripTransform.set(from: proto.gripTransform)
         self.thumbstick_x = proto.stickX
         self.thumbstick_y = proto.stickY
         self.trigger = proto.trigger

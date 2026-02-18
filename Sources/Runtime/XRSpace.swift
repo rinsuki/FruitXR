@@ -53,10 +53,10 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
         switch subpath {
         case XR_PATH_USER_HAND_LEFT:
             spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-            spaceLocation.pose.set(from: session.currentHeadsetInfo.leftController.transform)
+            spaceLocation.pose.set(from: session.currentHeadsetInfo.leftController.pointerTransform)
         case XR_PATH_USER_HAND_RIGHT:
             spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-            spaceLocation.pose.set(from: session.currentHeadsetInfo.rightController.transform)
+            spaceLocation.pose.set(from: session.currentHeadsetInfo.rightController.pointerTransform)
         default:
             spaceLocation.locationFlags = 0
         }
