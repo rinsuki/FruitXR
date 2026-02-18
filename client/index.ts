@@ -221,7 +221,7 @@ class Client {
                 ), // STUB
             }
         }
-        console.log(JSON.stringify(currentPositionValue))
+        // console.log(JSON.stringify(currentPositionValue))
         this.sendMessage({
             message: {
                 case: "currentPosition",
