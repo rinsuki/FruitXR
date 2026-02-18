@@ -9,14 +9,25 @@ import Foundation
 
 class XRActionSet {
     let instance: XRInstance
+    let name: String
+    let localizedName: String
+    var actions: [XRAction] = []
+    /// Whether this action set has been attached to a session via xrAttachSessionActionSets
+    private(set) var attached = false
     private(set) var destroyed = false
     
-    init(instance: XRInstance) {
+    init(instance: XRInstance, name: String, localizedName: String) {
         self.instance = instance
+        self.name = name
+        self.localizedName = localizedName
     }
     
     deinit {
         precondition(destroyed)
+    }
+    
+    func markAttached() {
+        attached = true
     }
     
     func destroy() {
@@ -31,7 +42,15 @@ func xrCreateActionSet(instance: XrInstance?, createInfo: UnsafePointer<XrAction
     
     let instanceObj = Unmanaged<XRInstance>.fromOpaque(.init(instance)).takeUnretainedValue()
     
-    let actionSet = XRActionSet(instance: instanceObj)
+    var info = createInfo!.pointee
+    let name = withUnsafeBytes(of: &info.actionSetName) { ptr in
+        return String(cString: ptr.bindMemory(to: CChar.self).baseAddress!)
+    }
+    let localizedName = withUnsafeBytes(of: &info.localizedActionSetName) { ptr in
+        return String(cString: ptr.bindMemory(to: CChar.self).baseAddress!)
+    }
+    
+    let actionSet = XRActionSet(instance: instanceObj, name: name, localizedName: localizedName)
     let ptr = Unmanaged.passRetained(actionSet).toOpaque()
     actionSetPtr!.pointee = OpaquePointer(ptr)
     
