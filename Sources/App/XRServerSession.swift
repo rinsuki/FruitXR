@@ -13,7 +13,7 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
     let port: NSMachPort
     var encoder = XRVideoEncoder(eye: 0)
     var websocket = URLSession.shared.webSocketTask(with: URL(string: "ws://localhost:18034/encoder")!)
-    var currentInfo = CurrentHeadsetInfo()
+    var currentInfo = IPCCurrentHeadsetInfo()
     let instance: XRServerInstance
     var pixelBufferPool: CVPixelBufferPool?
     let ciContext: CIContext
@@ -68,45 +68,11 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                     // TODO
                     break
                 case .currentPosition(let cp):
-                    currentInfo.hmd.position.x = cp.hmd.position.x
-                    currentInfo.hmd.position.y = cp.hmd.position.y
-                    currentInfo.hmd.position.z = cp.hmd.position.z
-                    currentInfo.hmd.orientation.x = cp.hmd.orientation.x
-                    currentInfo.hmd.orientation.y = cp.hmd.orientation.y
-                    currentInfo.hmd.orientation.z = cp.hmd.orientation.z
-                    currentInfo.hmd.orientation.w = cp.hmd.orientation.w
-                    
-                    currentInfo.leftEye.position.x = cp.leftEye.position.x
-                    currentInfo.leftEye.position.y = cp.leftEye.position.y
-                    currentInfo.leftEye.position.z = cp.leftEye.position.z
-                    currentInfo.leftEye.orientation.x = cp.leftEye.orientation.x
-                    currentInfo.leftEye.orientation.y = cp.leftEye.orientation.y
-                    currentInfo.leftEye.orientation.z = cp.leftEye.orientation.z
-                    currentInfo.leftEye.orientation.w = cp.leftEye.orientation.w
-
-                    currentInfo.rightEye.position.x = cp.rightEye.position.x
-                    currentInfo.rightEye.position.y = cp.rightEye.position.y
-                    currentInfo.rightEye.position.z = cp.rightEye.position.z
-                    currentInfo.rightEye.orientation.x = cp.rightEye.orientation.x
-                    currentInfo.rightEye.orientation.y = cp.rightEye.orientation.y
-                    currentInfo.rightEye.orientation.z = cp.rightEye.orientation.z
-                    currentInfo.rightEye.orientation.w = cp.rightEye.orientation.w
-
-                    currentInfo.leftController.position.x = cp.leftController.position.x
-                    currentInfo.leftController.position.y = cp.leftController.position.y
-                    currentInfo.leftController.position.z = cp.leftController.position.z
-                    currentInfo.leftController.orientation.x = cp.leftController.orientation.x
-                    currentInfo.leftController.orientation.y = cp.leftController.orientation.y
-                    currentInfo.leftController.orientation.z = cp.leftController.orientation.z
-                    currentInfo.leftController.orientation.w = cp.leftController.orientation.w
-
-                    currentInfo.rightController.position.x = cp.rightController.position.x
-                    currentInfo.rightController.position.y = cp.rightController.position.y
-                    currentInfo.rightController.position.z = cp.rightController.position.z
-                    currentInfo.rightController.orientation.x = cp.rightController.orientation.x
-                    currentInfo.rightController.orientation.y = cp.rightController.orientation.y
-                    currentInfo.rightController.orientation.z = cp.rightController.orientation.z
-                    currentInfo.rightController.orientation.w = cp.rightController.orientation.w
+                    currentInfo.hmd.set(from: cp.hmd)
+                    currentInfo.leftEye.set(from: cp.leftEye)
+                    currentInfo.rightEye.set(from: cp.rightEye)
+                    currentInfo.leftController.set(from: cp.leftController)
+                    currentInfo.rightController.set(from: cp.rightController)
                 }
             }
         } catch {
@@ -133,10 +99,10 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
         return swapchain
     }
     
-    @objc func endFrame(info: EndFrameInfo) {
+    @objc func endFrame(info: IPCEndFrameInfo) {
         var info = info
         withUnsafePointer(to: &info.eyes) {
-            $0.withMemoryRebound(to: EndFrameInfoPerEye.self, capacity: 2) { eyes in
+            $0.withMemoryRebound(to: IPCEndFrameInfoPerEye.self, capacity: 2) { eyes in
                 var images: [Surface] = []
                 var pixelBuffer: CVPixelBuffer?
                 let res = CVPixelBufferPoolCreatePixelBuffer(nil, pixelBufferPool!, &pixelBuffer)
@@ -178,7 +144,7 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
         }
     }
     
-    @objc func getCurrentHeadsetInfo(_ chi: UnsafeMutablePointer<CurrentHeadsetInfo>) {
+    @objc func getCurrentHeadsetInfo(_ chi: UnsafeMutablePointer<IPCCurrentHeadsetInfo>) {
         chi.pointee = currentInfo
     }
 }

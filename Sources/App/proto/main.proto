@@ -55,10 +55,20 @@ message Transform {
     Orientation orientation = 2;
 }
 
+message HandController {
+    Transform transform = 1;
+    float stick_x = 2;
+    float stick_y = 3;
+    float squeeze = 4;
+    float trigger = 5;
+    // see IPCStructs.h
+    uint32 buttons = 6;
+}
+
 message FBCurrentPosition {
     Transform hmd = 1;
     Transform leftEye = 2;
     Transform rightEye = 3;
-    Transform leftController = 4;
-    Transform rightController = 5;
+    HandController leftController = 4;
+    HandController rightController = 5;
 }

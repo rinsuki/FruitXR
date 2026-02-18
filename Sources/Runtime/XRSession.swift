@@ -13,8 +13,8 @@ class XRSession {
     let instance: XRInstance
     let graphicsAPI: GraphicsAPI
     private(set) var destroyed = false
-    var currentHeadsetInfo = CurrentHeadsetInfo()
-     var sessionStarted = false
+    var currentHeadsetInfo = IPCCurrentHeadsetInfo()
+    var sessionStarted = false
 
     enum GraphicsAPI {
         case metal(commandQueue: MTLCommandQueue)
@@ -198,9 +198,9 @@ class XRSession {
                         print("WARNING: viewCount should be two but \(projectionLayer.pointee.viewCount)")
                         return XR_ERROR_LAYER_INVALID
                     }
-                    var endInfo = EndFrameInfo()
+                    var endInfo = IPCEndFrameInfo()
                     withUnsafeMutableBytes(of: &endInfo.eyes) {
-                        $0.withMemoryRebound(to: EndFrameInfoPerEye.self) { eyes in
+                        $0.withMemoryRebound(to: IPCEndFrameInfoPerEye.self) { eyes in
                             for i in 0..<eyes.count {
                                 let swapchain = Unmanaged<XRSwapchain>.fromOpaque(.init(projectionLayer.pointee.views[i].subImage.swapchain)).takeUnretainedValue()
                                 eyes[i].swapchain_id = swapchain.remoteId

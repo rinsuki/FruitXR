@@ -53,12 +53,10 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
         switch subpath {
         case XR_PATH_USER_HAND_LEFT:
             spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-            spaceLocation.pose.position = .init(x: session.currentHeadsetInfo.leftController.position.x, y: session.currentHeadsetInfo.leftController.position.y, z: session.currentHeadsetInfo.leftController.position.z)
-            spaceLocation.pose.orientation = .init(x: session.currentHeadsetInfo.leftController.orientation.x, y: session.currentHeadsetInfo.leftController.orientation.y, z: session.currentHeadsetInfo.leftController.orientation.z, w: session.currentHeadsetInfo.leftController.orientation.w)
+            spaceLocation.pose.set(from: session.currentHeadsetInfo.leftController.transform)
         case XR_PATH_USER_HAND_RIGHT:
             spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-            spaceLocation.pose.position = .init(x: session.currentHeadsetInfo.rightController.position.x, y: session.currentHeadsetInfo.rightController.position.y, z: session.currentHeadsetInfo.rightController.position.z)
-            spaceLocation.pose.orientation = .init(x: session.currentHeadsetInfo.rightController.orientation.x, y: session.currentHeadsetInfo.rightController.orientation.y, z: session.currentHeadsetInfo.rightController.orientation.z, w: session.currentHeadsetInfo.rightController.orientation.w)
+            spaceLocation.pose.set(from: session.currentHeadsetInfo.rightController.transform)
         default:
             spaceLocation.locationFlags = 0
         }

@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file main.proto.
  */
 export const file_main: GenFile = /*@__PURE__*/
-  fileDesc("CgptYWluLnByb3RvImoKCVRvQnJvd3NlchIuChB2aWRlb19pbml0aWFsaXplGAogASgLMhIuVEJWaWRlb0luaXRpYWxpemVIABIiCgp2aWRlb19kYXRhGAsgASgLMgwuVEJWaWRlb0RhdGFIAEIJCgdtZXNzYWdlIm4KEVRCVmlkZW9Jbml0aWFsaXplEgsKA2V5ZRgBIAEoDRIYChBpbml0aWFsaXplX2NvdW50GAIgASgNEhoKBWNvZGVjGAMgASgOMgsuVmlkZW9Db2RlYxIWCg5wYXJhbWV0ZXJfc2V0cxgEIAMoDCJXCgtUQlZpZGVvRGF0YRILCgNleWUYASABKA0SGAoQaW5pdGlhbGl6ZV9jb3VudBgCIAEoDRIQCghrZXlmcmFtZRgEIAEoCBIPCgdjb250ZW50GAMgASgMInAKC0Zyb21Ccm93c2VyEiYKDGluaXRfZW5jb2RlchgBIAEoCzIOLkZCSW5pdEVuY29kZXJIABIuChBjdXJyZW50X3Bvc2l0aW9uGAIgASgLMhIuRkJDdXJyZW50UG9zaXRpb25IAEIJCgdtZXNzYWdlIg8KDUZCSW5pdEVuY29kZXIiKwoIUG9zaXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAIiOQoLT3JpZW50YXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAISCQoBdxgEIAEoAiJLCglUcmFuc2Zvcm0SGwoIcG9zaXRpb24YASABKAsyCS5Qb3NpdGlvbhIhCgtvcmllbnRhdGlvbhgCIAEoCzIMLk9yaWVudGF0aW9uIrABChFGQkN1cnJlbnRQb3NpdGlvbhIXCgNobWQYASABKAsyCi5UcmFuc2Zvcm0SGwoHbGVmdEV5ZRgCIAEoCzIKLlRyYW5zZm9ybRIcCghyaWdodEV5ZRgDIAEoCzIKLlRyYW5zZm9ybRIiCg5sZWZ0Q29udHJvbGxlchgEIAEoCzIKLlRyYW5zZm9ybRIjCg9yaWdodENvbnRyb2xsZXIYBSABKAsyCi5UcmFuc2Zvcm0qJAoKVmlkZW9Db2RlYxILCgdVTktOT1dOEAASCQoESEVWQxCJAmIIZWRpdGlvbnNw6Ac");
+  fileDesc("CgptYWluLnByb3RvImoKCVRvQnJvd3NlchIuChB2aWRlb19pbml0aWFsaXplGAogASgLMhIuVEJWaWRlb0luaXRpYWxpemVIABIiCgp2aWRlb19kYXRhGAsgASgLMgwuVEJWaWRlb0RhdGFIAEIJCgdtZXNzYWdlIm4KEVRCVmlkZW9Jbml0aWFsaXplEgsKA2V5ZRgBIAEoDRIYChBpbml0aWFsaXplX2NvdW50GAIgASgNEhoKBWNvZGVjGAMgASgOMgsuVmlkZW9Db2RlYxIWCg5wYXJhbWV0ZXJfc2V0cxgEIAMoDCJXCgtUQlZpZGVvRGF0YRILCgNleWUYASABKA0SGAoQaW5pdGlhbGl6ZV9jb3VudBgCIAEoDRIQCghrZXlmcmFtZRgEIAEoCBIPCgdjb250ZW50GAMgASgMInAKC0Zyb21Ccm93c2VyEiYKDGluaXRfZW5jb2RlchgBIAEoCzIOLkZCSW5pdEVuY29kZXJIABIuChBjdXJyZW50X3Bvc2l0aW9uGAIgASgLMhIuRkJDdXJyZW50UG9zaXRpb25IAEIJCgdtZXNzYWdlIg8KDUZCSW5pdEVuY29kZXIiKwoIUG9zaXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAIiOQoLT3JpZW50YXRpb24SCQoBeBgBIAEoAhIJCgF5GAIgASgCEgkKAXoYAyABKAISCQoBdxgEIAEoAiJLCglUcmFuc2Zvcm0SGwoIcG9zaXRpb24YASABKAsyCS5Qb3NpdGlvbhIhCgtvcmllbnRhdGlvbhgCIAEoCzIMLk9yaWVudGF0aW9uIoQBCg5IYW5kQ29udHJvbGxlchIdCgl0cmFuc2Zvcm0YASABKAsyCi5UcmFuc2Zvcm0SDwoHc3RpY2tfeBgCIAEoAhIPCgdzdGlja195GAMgASgCEg8KB3NxdWVlemUYBCABKAISDwoHdHJpZ2dlchgFIAEoAhIPCgdidXR0b25zGAYgASgNIroBChFGQkN1cnJlbnRQb3NpdGlvbhIXCgNobWQYASABKAsyCi5UcmFuc2Zvcm0SGwoHbGVmdEV5ZRgCIAEoCzIKLlRyYW5zZm9ybRIcCghyaWdodEV5ZRgDIAEoCzIKLlRyYW5zZm9ybRInCg5sZWZ0Q29udHJvbGxlchgEIAEoCzIPLkhhbmRDb250cm9sbGVyEigKD3JpZ2h0Q29udHJvbGxlchgFIAEoCzIPLkhhbmRDb250cm9sbGVyKiQKClZpZGVvQ29kZWMSCwoHVU5LTk9XThAAEgkKBEhFVkMQiQJiCGVkaXRpb25zcOgH");
 
 /**
  * @generated from message ToBrowser
@@ -229,6 +229,50 @@ export const TransformSchema: GenMessage<Transform> = /*@__PURE__*/
   messageDesc(file_main, 7);
 
 /**
+ * @generated from message HandController
+ */
+export type HandController = Message<"HandController"> & {
+  /**
+   * @generated from field: Transform transform = 1;
+   */
+  transform?: Transform;
+
+  /**
+   * @generated from field: float stick_x = 2;
+   */
+  stickX: number;
+
+  /**
+   * @generated from field: float stick_y = 3;
+   */
+  stickY: number;
+
+  /**
+   * @generated from field: float squeeze = 4;
+   */
+  squeeze: number;
+
+  /**
+   * @generated from field: float trigger = 5;
+   */
+  trigger: number;
+
+  /**
+   * see IPCStructs.h
+   *
+   * @generated from field: uint32 buttons = 6;
+   */
+  buttons: number;
+};
+
+/**
+ * Describes the message HandController.
+ * Use `create(HandControllerSchema)` to create a new message.
+ */
+export const HandControllerSchema: GenMessage<HandController> = /*@__PURE__*/
+  messageDesc(file_main, 8);
+
+/**
  * @generated from message FBCurrentPosition
  */
 export type FBCurrentPosition = Message<"FBCurrentPosition"> & {
@@ -248,14 +292,14 @@ export type FBCurrentPosition = Message<"FBCurrentPosition"> & {
   rightEye?: Transform;
 
   /**
-   * @generated from field: Transform leftController = 4;
+   * @generated from field: HandController leftController = 4;
    */
-  leftController?: Transform;
+  leftController?: HandController;
 
   /**
-   * @generated from field: Transform rightController = 5;
+   * @generated from field: HandController rightController = 5;
    */
-  rightController?: Transform;
+  rightController?: HandController;
 };
 
 /**
@@ -263,7 +307,7 @@ export type FBCurrentPosition = Message<"FBCurrentPosition"> & {
  * Use `create(FBCurrentPositionSchema)` to create a new message.
  */
 export const FBCurrentPositionSchema: GenMessage<FBCurrentPosition> = /*@__PURE__*/
-  messageDesc(file_main, 8);
+  messageDesc(file_main, 9);
 
 /**
  * @generated from enum VideoCodec

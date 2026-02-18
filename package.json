@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "buf build",
+    "build": "buf generate",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

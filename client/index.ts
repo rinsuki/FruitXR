@@ -119,7 +119,7 @@ class Client {
     }
 
     async setupWebXR() {
-        this.referenceSpace = await this.session.requestReferenceSpace("local-floor")
+        this.referenceSpace = await this.session.requestReferenceSpace("local")
         const program = createShaderProgram(this.gl)
         this.gl.useProgram(program)
 
@@ -183,15 +183,37 @@ class Client {
             hmd: pose.transform,
             leftEye: leftTransform,
             rightEye: rightTransform,
+            leftController: {},
+            rightController: {},
         }
         for (const source of this.session.inputSources) {
             if (source.gripSpace == null) continue
             const pose = frame.getPose(source.gripSpace, this.referenceSpace)
             if (pose == null) continue
+            let key: "leftController" | "rightController"
             if (source.handedness === "left") {
-                currentPositionValue.leftController = pose.transform
+                key = "leftController"
             } else if (source.handedness === "right") {
-                currentPositionValue.rightController = pose.transform
+                key = "rightController"
+            } else {
+                continue
+            }
+            currentPositionValue[key] = {
+                transform: pose.transform,
+                stickX: source.gamepad?.axes[2] ?? 0,
+                stickY: source.gamepad?.axes[3] ?? 0,
+                trigger: source.gamepad?.buttons[0]?.value ?? 0,
+                squeeze: source.gamepad?.buttons[1]?.value ?? 0,
+                buttons: (
+                    (source.gamepad?.buttons[4]?.pressed ? 1 << 0 : 0) | // primary click
+                    (source.gamepad?.buttons[4]?.touched ? 1 << 1 : 0) | // primary touch
+                    (source.gamepad?.buttons[5]?.pressed ? 1 << 2 : 0) | // secondary click
+                    (source.gamepad?.buttons[5]?.touched ? 1 << 3 : 0) | // secondary touch
+                    (source.gamepad?.buttons[3]?.pressed ? 1 << 4 : 0) | // stick click
+                    (source.gamepad?.buttons[3]?.touched ? 1 << 5 : 0) | // stick touch
+                    // TODO: system buttons (the last button)
+                    (source.gamepad?.buttons[6]?.touched ? 1 << 7 : 0) // thumbrest touch
+                ), // STUB
             }
         }
         console.log(JSON.stringify(currentPositionValue))

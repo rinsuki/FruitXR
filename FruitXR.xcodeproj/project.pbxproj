@@ -516,6 +516,7 @@
 				"/Localized: App/MainMenu.xib",
 				App/AppDelegate.swift,
 				App/Assets.xcassets,
+				"App/IPCStructs+Proto.swift",
 				App/openxr_manifest.json,
 				App/proto/main.proto,
 				"App/proto/swift-protobuf-config.json",
@@ -535,6 +536,7 @@
 			membershipExceptions = (
 				Runtime/CCharUtils.swift,
 				Runtime/getInstanceAddr.swift,
+				"Runtime/IPCStructs+Xr.swift",
 				Runtime/test.c,
 				Runtime/XRAction.swift,
 				Runtime/XRActionSet.swift,

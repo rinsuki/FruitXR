@@ -20,17 +20,17 @@ routine SwapchainAddIOSurface(
 
 routine SwapchainSwitch(swapchain_port: mach_port_t; index: int32_t);
 
-type EndFrameInfoPerEye = struct [1] of int32_t;
-type EndFrameInfo = struct [2] of EndFrameInfoPerEye;
+type IPCEndFrameInfoPerEye = struct [1] of int32_t;
+type IPCEndFrameInfo = struct [2] of IPCEndFrameInfoPerEye;
 
 routine EndFrame(
     session_port : mach_port_t;
-    info : EndFrameInfo
+    info : IPCEndFrameInfo
 );
 
-type CurrentHeadsetInfo = struct [35] of float;
+type IPCCurrentHeadsetInfo = struct [45] of float;
 
 routine SessionGetCurrentInfo(
     session_port: mach_port_t;
-    out current_headset_info: CurrentHeadsetInfo
+    out current_headset_info: IPCCurrentHeadsetInfo
 );

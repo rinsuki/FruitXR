@@ -54,7 +54,7 @@ kern_return_t FI_S_SwapchainSwitch(mach_port_t swapchain_port, int32_t index) {
     return KERN_SUCCESS;
 }
 
-kern_return_t FI_S_EndFrame(mach_port_t session_port, EndFrameInfo end_info) {
+kern_return_t FI_S_EndFrame(mach_port_t session_port, IPCEndFrameInfo end_info) {
     XRServerSession* session = [XRServer.shared.sessions objectForKey:@(session_port)];
     if (session == NULL) return KERN_FAILURE;
     [session endFrameWithInfo: end_info];
@@ -62,7 +62,7 @@ kern_return_t FI_S_EndFrame(mach_port_t session_port, EndFrameInfo end_info) {
     return KERN_SUCCESS;
 }
 
-kern_return_t FI_S_SessionGetCurrentInfo(mach_port_t session_port, CurrentHeadsetInfo* current_info) {
+kern_return_t FI_S_SessionGetCurrentInfo(mach_port_t session_port, IPCCurrentHeadsetInfo* current_info) {
     XRServerSession* session = [XRServer.shared.sessions objectForKey:@(session_port)];
     if (session == NULL) return KERN_FAILURE;
     [session getCurrentHeadsetInfo: current_info];
