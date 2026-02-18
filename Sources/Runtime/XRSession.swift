@@ -161,10 +161,25 @@ class XRSession {
     }
     
     func getActionState(info: XrActionStateGetInfo, vector2f: inout XrActionStateVector2f) -> XrResult {
-        print("STUB: xrGetActionStateVector2f(\(self), \(info), \(vector2f))")
-        vector2f.isActive = .init(XR_FALSE)
-        vector2f.changedSinceLastSync = .init(XR_FALSE)
-        vector2f.currentState = .init(x: 0, y: 0)
+        // let actionObj = Unmanaged<XRAction>.fromOpaque(.init(info.action)).takeUnretainedValue()
+        let path = info.subactionPath
+        // print("STUB: xrGetActionStateVector2f(\(self), \(info), \(vector2f))")
+        
+        // TODO: properly consider actions
+        switch path {
+        case XR_PATH_USER_HAND_LEFT:
+            vector2f.isActive = .init(XR_TRUE)
+            vector2f.changedSinceLastSync = .init(XR_TRUE)
+            vector2f.currentState = .init(x: currentHeadsetInfo.leftController.thumbstick_x, y: -currentHeadsetInfo.leftController.thumbstick_y)
+        case XR_PATH_USER_HAND_RIGHT:
+            vector2f.isActive = .init(XR_TRUE)
+            vector2f.changedSinceLastSync = .init(XR_TRUE)
+            vector2f.currentState = .init(x: currentHeadsetInfo.rightController.thumbstick_x, y: -currentHeadsetInfo.rightController.thumbstick_y)
+        default:
+            vector2f.isActive = .init(XR_FALSE)
+            vector2f.changedSinceLastSync = .init(XR_FALSE)
+            vector2f.currentState = .init(x: 0, y: 0)
+        }
         return XR_SUCCESS
     }
     
