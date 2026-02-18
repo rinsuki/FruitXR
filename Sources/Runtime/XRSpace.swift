@@ -50,16 +50,66 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
     }
 
     override func locate(baseSpace: XRSpace?, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
-        switch subpath {
-        case XR_PATH_USER_HAND_LEFT:
-            spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-            spaceLocation.pose.set(from: session.currentHeadsetInfo.leftController.pointerTransform)
-        case XR_PATH_USER_HAND_RIGHT:
-            spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-            spaceLocation.pose.set(from: session.currentHeadsetInfo.rightController.pointerTransform)
-        default:
-            spaceLocation.locationFlags = 0
+        // Determine which top-level user path(s) to use for this space.
+        // If subpath is specified, use that. Otherwise, find any binding for this action.
+        let topLevelPaths: [XrPath]
+        if subpath != XR_NULL_PATH {
+            topLevelPaths = [subpath]
+        } else if !action.subactionPaths.isEmpty {
+            topLevelPaths = action.subactionPaths
+        } else {
+            // No subaction paths — find from resolved bindings
+            var foundPaths: [XrPath] = []
+            for bindings in session.resolvedBindings.values {
+                for binding in bindings {
+                    if binding.action === action, !foundPaths.contains(binding.topLevelUserPath) {
+                        foundPaths.append(binding.topLevelUserPath)
+                    }
+                }
+            }
+            topLevelPaths = foundPaths
         }
+        
+        // Find the first active binding for a pose input
+        for path in topLevelPaths {
+            let controller: IPCHandController
+            switch path {
+            case XR_PATH_USER_HAND_LEFT:
+                controller = session.currentHeadsetInfo.leftController
+            case XR_PATH_USER_HAND_RIGHT:
+                controller = session.currentHeadsetInfo.rightController
+            default:
+                continue
+            }
+            
+            // Check if there's a resolved binding for this action on this hand
+            var hasPoseBinding = false
+            var useGrip = false
+            for (_, bindings) in session.resolvedBindings {
+                for binding in bindings {
+                    if binding.action === action && binding.topLevelUserPath == path {
+                        hasPoseBinding = true
+                        if binding.componentPath == "input/grip/pose" {
+                            useGrip = true
+                        }
+                    }
+                }
+            }
+            
+            if hasPoseBinding {
+                spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
+                if useGrip {
+                    spaceLocation.pose.set(from: controller.gripTransform)
+                } else {
+                    // Default to aim/pointer pose
+                    spaceLocation.pose.set(from: controller.pointerTransform)
+                }
+                return XR_SUCCESS
+            }
+        }
+        
+        // No matching binding found
+        spaceLocation.locationFlags = 0
         // TODO: care about baseSpace and pose
         return XR_SUCCESS
     }
@@ -75,7 +125,7 @@ func xrCreateActionSpace(session: XrSession?, createInfo: UnsafePointer<XrAction
     let actionPtr = createInfo?.pointee.action
     let action = Unmanaged<XRAction>.fromOpaque(.init(actionPtr!)).takeUnretainedValue()
 
-    if createInfo!.pointee.subactionPath != XR_NULL_PATH, !action.paths.contains(createInfo!.pointee.subactionPath) {
+    if createInfo!.pointee.subactionPath != XR_NULL_PATH, !action.subactionPaths.contains(createInfo!.pointee.subactionPath) {
         return XR_ERROR_PATH_UNSUPPORTED
     }
     

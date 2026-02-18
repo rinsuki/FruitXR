@@ -10,9 +10,69 @@ import Metal
 
 private let VALID_SYSTEM_ID: XrSystemId = 1
 
+/// Represents a single suggested binding from the application: an action bound to a specific input/output path.
+struct SuggestedBinding {
+    let action: XRAction
+    /// The full binding path, e.g. /user/hand/left/input/trigger/value
+    let bindingPath: String
+}
+
+/// Stores the set of valid component paths for a known interaction profile.
+struct InteractionProfileDefinition {
+    /// Valid component subpaths for /user/hand/left (e.g. "input/trigger/value")
+    let leftHandComponents: Set<String>
+    /// Valid component subpaths for /user/hand/right (e.g. "input/trigger/value")
+    let rightHandComponents: Set<String>
+}
+
+/// The Oculus Touch controller profile component paths
+let oculusTouchProfile: InteractionProfileDefinition = {
+    let bothHands: Set<String> = [
+        "input/squeeze/value",
+        "input/trigger/value",
+        "input/trigger/touch",
+        "input/thumbstick",
+        "input/thumbstick/x",
+        "input/thumbstick/y",
+        "input/thumbstick/click",
+        "input/thumbstick/touch",
+        "input/thumbrest/touch",
+        "input/grip/pose",
+        "input/aim/pose",
+        "output/haptic",
+    ]
+    
+    let leftOnly: Set<String> = [
+        "input/x/click",
+        "input/x/touch",
+        "input/y/click",
+        "input/y/touch",
+        "input/menu/click",
+    ]
+    
+    let rightOnly: Set<String> = [
+        "input/a/click",
+        "input/a/touch",
+        "input/b/click",
+        "input/b/touch",
+        "input/system/click",
+    ]
+    
+    return InteractionProfileDefinition(
+        leftHandComponents: bothHands.union(leftOnly),
+        rightHandComponents: bothHands.union(rightOnly)
+    )
+}()
+
+/// Known interaction profiles and their definitions
+let knownInteractionProfiles: [String: InteractionProfileDefinition] = [
+    "/interaction_profiles/oculus/touch_controller": oculusTouchProfile,
+]
+
 class XRInstance {
     enum Event {
         case stateChanged(XRSession, XrSessionState)
+        case interactionProfileChanged(XRSession)
     } 
 
     var port: NSMachPort?
@@ -20,7 +80,13 @@ class XRInstance {
     private let device: MTLDevice
     private var destroyed: Bool = false
     private var queuedEvents = [Event]()
-//    private let port: CFMessagePort
+    
+    /// Suggested bindings per interaction profile path (String -> [SuggestedBinding])
+    /// Set by xrSuggestInteractionProfileBindings, used during xrAttachSessionActionSets to resolve bindings.
+    var suggestedBindings: [String: [SuggestedBinding]] = [:]
+    
+    /// Whether any session has attached action sets (prevents further xrSuggestInteractionProfileBindings calls)
+    var actionSetsAttached = false
     
     init() throws(XRError) {
         guard let machServer = FXMachBootstrapServer.sharedInstance() as? FXMachBootstrapServer else {
@@ -174,7 +240,48 @@ class XRInstance {
     }
     
     func suggestInteractionProfileBindings(suggestedBindings: XrInteractionProfileSuggestedBinding) -> XrResult {
-        print("STUB: xrSuggestInteractionProfileBindings(\(suggestedBindings)), path=\(xrRegisteredPaths[.init(suggestedBindings.interactionProfile)])")
+        // Cannot call after action sets have been attached
+        if actionSetsAttached {
+            return XR_ERROR_ACTIONSETS_ALREADY_ATTACHED
+        }
+        
+        let profilePath = xrRegisteredPaths[Int(suggestedBindings.interactionProfile)]
+        
+        // Validate that the interaction profile is known
+        guard let profileDef = knownInteractionProfiles[profilePath] else {
+            print("xrSuggestInteractionProfileBindings: unknown interaction profile \(profilePath)")
+            return XR_ERROR_PATH_UNSUPPORTED
+        }
+        
+        var bindings: [SuggestedBinding] = []
+        
+        for i in 0..<Int(suggestedBindings.countSuggestedBindings) {
+            let binding = suggestedBindings.suggestedBindings[i]
+            let action = Unmanaged<XRAction>.fromOpaque(.init(binding.action)).takeUnretainedValue()
+            let bindingPathStr = xrRegisteredPaths[Int(binding.binding)]
+            
+            // Validate binding path: must start with a valid top-level user path for this profile
+            // and the component subpath must be valid for that hand
+            var valid = false
+            if bindingPathStr.hasPrefix("/user/hand/left/") {
+                let component = String(bindingPathStr.dropFirst("/user/hand/left/".count))
+                valid = profileDef.leftHandComponents.contains(component)
+            } else if bindingPathStr.hasPrefix("/user/hand/right/") {
+                let component = String(bindingPathStr.dropFirst("/user/hand/right/".count))
+                valid = profileDef.rightHandComponents.contains(component)
+            }
+            
+            if !valid {
+                print("xrSuggestInteractionProfileBindings: unsupported binding path \(bindingPathStr) for profile \(profilePath)")
+                return XR_ERROR_PATH_UNSUPPORTED
+            }
+            
+            bindings.append(SuggestedBinding(action: action, bindingPath: bindingPathStr))
+        }
+        
+        // Replace any previous bindings for this profile
+        self.suggestedBindings[profilePath] = bindings
+        print("xrSuggestInteractionProfileBindings: stored \(bindings.count) bindings for \(profilePath)")
         return XR_SUCCESS
     }
     
@@ -208,6 +315,12 @@ class XRInstance {
                 pointer.pointee.session = .init(Unmanaged.passUnretained(session).toOpaque())
                 pointer.pointee.state = state
                 pointer.pointee.time = 0
+            }
+        case .interactionProfileChanged(let session):
+            event.withMemoryRebound(to: XrEventDataInteractionProfileChanged.self, capacity: 1) { pointer in
+                pointer.pointee.type = XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED
+                pointer.pointee.next = nil
+                pointer.pointee.session = .init(Unmanaged.passUnretained(session).toOpaque())
             }
         }
         

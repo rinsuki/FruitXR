@@ -8,20 +8,25 @@
 class XRAction: CustomStringConvertible {
     let actionSet: XRActionSet
     let name: String
-    let paths: [XrPath]
+    let localizedName: String
+    let actionType: XrActionType
+    /// The subaction paths this action was created with (e.g. /user/hand/left, /user/hand/right).
+    /// Empty means the action does not use subaction path filtering.
+    let subactionPaths: [XrPath]
     
-    init(actionSet: XRActionSet, name: String, paths: [XrPath]) {
+    init(actionSet: XRActionSet, name: String, localizedName: String, actionType: XrActionType, subactionPaths: [XrPath]) {
         self.actionSet = actionSet
         self.name = name
-        self.paths = paths
+        self.localizedName = localizedName
+        self.actionType = actionType
+        self.subactionPaths = subactionPaths
     }
     
     var description: String {
-        return "<XRAction: \(String(format: "%p", unsafeBitCast(self, to: Int.self))), name=\(name), paths=\(paths.map { xrRegisteredPaths[Int($0)] })>"
+        return "<XRAction: \(String(format: "%p", unsafeBitCast(self, to: Int.self))), name=\(name), type=\(actionType), subactionPaths=\(subactionPaths.map { xrRegisteredPaths[Int($0)] })>"
     }
     
     func destroy() {
-        print("STUB: destroy XRAction")
     }
 }
 
@@ -31,18 +36,26 @@ func xrCreateAction(actionSet: XrActionSet?, createInfo: UnsafePointer<XrActionC
     }
     
     let actionSetObj = Unmanaged<XRActionSet>.fromOpaque(.init(actionSet)).takeUnretainedValue()
-    var paths: [XrPath] = []
+    
+    guard !actionSetObj.attached else {
+        return XR_ERROR_ACTIONSETS_ALREADY_ATTACHED
+    }
+    
+    var subactionPaths: [XrPath] = []
     for i in 0..<createInfo!.pointee.countSubactionPaths {
         let pathPtr = createInfo!.pointee.subactionPaths.advanced(by: Int(i)).pointee
-        paths.append(pathPtr)
+        subactionPaths.append(pathPtr)
     }
     
     var createInfo = createInfo!.pointee
-    // TODO: feels unsafe
     let name = withUnsafeBytes(of: &createInfo.actionName) { ptr in
         return String(cString: ptr.bindMemory(to: CChar.self).baseAddress!)
     }
-    let action = XRAction(actionSet: actionSetObj, name: name, paths: paths)
+    let localizedName = withUnsafeBytes(of: &createInfo.localizedActionName) { ptr in
+        return String(cString: ptr.bindMemory(to: CChar.self).baseAddress!)
+    }
+    let action = XRAction(actionSet: actionSetObj, name: name, localizedName: localizedName, actionType: createInfo.actionType, subactionPaths: subactionPaths)
+    actionSetObj.actions.append(action)
     let ptr = Unmanaged.passRetained(action).toOpaque()
     actionPtr!.pointee = OpaquePointer(ptr)
     
