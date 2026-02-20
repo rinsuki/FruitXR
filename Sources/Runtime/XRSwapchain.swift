@@ -18,6 +18,7 @@ class XRSwapchain {
     var remoteId: UInt32
     var port: mach_port_t
     var currentTextureIndex: Int = 0
+    var ioSurfaceBackend = true
 
     nonisolated(unsafe) init(session: XRSession, createInfo: XrSwapchainCreateInfo) throws(XRError) {
         self.session = session
@@ -29,15 +30,14 @@ class XRSwapchain {
         switch session.graphicsAPI {
         case .metal(let commandQueue):
             for i in 0..<2 {
+                var metalPixelFormat = MTLPixelFormat(rawValue: .init(createInfo.format))!
                 let ioSurface = IOSurface(properties: [
                     .width: createInfo.width,
                     .height: createInfo.height,
                     .bytesPerElement: 4,
-                    .pixelFormat: kCVPixelFormatType_32BGRA,
+                    .pixelFormat: metalPixelFormat == .depth32Float ? kCVPixelFormatType_DepthFloat32 : kCVPixelFormatType_32BGRA,
                     .name: "test",
                 ])!
-                ioSurfaces.append(ioSurface)
-                var metalPixelFormat = MTLPixelFormat(rawValue: .init(createInfo.format))!
                 switch metalPixelFormat {
                 case .rgba8Unorm:
                     print("WARNING: converting RGB to BGR")
@@ -54,6 +54,9 @@ class XRSwapchain {
                 case .bgra8Unorm_srgb:
                     IOSurfaceSetValue(ioSurface, "IOSurfaceColorSpace" as CFString, CGColorSpace.sRGB)
                     break
+                case .depth32Float:
+                    ioSurfaceBackend = false
+                    break
                 default:
                     fatalError() // TODO: return error properly
                 }
@@ -62,16 +65,23 @@ class XRSwapchain {
                     .renderTarget,
                 ]
                 descriptor.storageMode = .managed
-                let texture = commandQueue.device.makeTexture(
-                    descriptor: descriptor,
-                    iosurface: ioSurface,
-                    plane: 0
-                )!
-                texture.label = "\(self) IOSurface-based \(i)"
+                let texture: any MTLTexture
+                if ioSurfaceBackend {
+                    ioSurfaces.append(ioSurface)
+                    texture = commandQueue.device.makeTexture(
+                        descriptor: descriptor,
+                        iosurface: ioSurface,
+                        plane: 0
+                    )!
+                    texture.label = "\(self) IOSurface-based \(i)"
+                    print("trying to send", ioSurface, "through", port)
+                    assert(FI_C_SwapchainAddIOSurface(port, IOSurfaceCreateMachPort(ioSurface)) == KERN_SUCCESS)
+                } else {
+                    texture = commandQueue.device.makeTexture(descriptor: descriptor)!
+                    texture.label = "\(self) local \(i)"
+                }
                 textures.append(texture)
 
-                print("trying to send", ioSurface, "through", port)
-                assert(FI_C_SwapchainAddIOSurface(port, IOSurfaceCreateMachPort(ioSurface)) == KERN_SUCCESS)
             }
         }
     }
@@ -110,7 +120,7 @@ class XRSwapchain {
     func acquireImage(info: XrSwapchainImageAcquireInfo?, index: inout UInt32) -> XrResult {
         // print("STUB: XRSwapchain.acquireImage(\(info), \(index))")
         currentTextureIndex += 1
-        index = .init(currentTextureIndex % ioSurfaces.count)
+        index = .init(currentTextureIndex % textures.count)
         return XR_SUCCESS
     }
     
@@ -121,7 +131,9 @@ class XRSwapchain {
 
     func releaseImage(info: XrSwapchainImageReleaseInfo?) -> XrResult {
         // print("STUB: XRSwapchain.releaseImage(\(info))")
-        assert(FI_C_SwapchainSwitch(port, Int32(currentTextureIndex % ioSurfaces.count)) == KERN_SUCCESS)
+        if ioSurfaceBackend {
+            assert(FI_C_SwapchainSwitch(port, Int32(currentTextureIndex % textures.count)) == KERN_SUCCESS)
+        }
         return XR_SUCCESS
     }
 }

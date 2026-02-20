@@ -103,6 +103,7 @@ class XRSession {
                 MTLPixelFormat.bgra8Unorm_srgb,
                 MTLPixelFormat.rgba8Unorm,
                 MTLPixelFormat.rgba8Unorm_srgb,
+                MTLPixelFormat.depth32Float,
             ]
             
             if formats.count < ourSupportedFormats.count {
