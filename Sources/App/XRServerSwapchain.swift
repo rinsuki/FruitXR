@@ -21,7 +21,22 @@ class Surface {
     
     init(ioSurface: IOSurface, device: any MTLDevice) {
         self.ioSurface = ioSurface
-        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Uint, width: ioSurface.width, height: ioSurface.height, mipmapped: false)
+        let pixelFormat: MTLPixelFormat
+        let isSRGB: Bool
+        if let colorSpace = IOSurfaceCopyValue(ioSurface, kIOSurfaceColorSpace) as? String {
+            isSRGB = colorSpace == (CGColorSpace.sRGB as String)
+        } else {
+            isSRGB = false
+        }
+        switch ioSurface.pixelFormat {
+        case kCVPixelFormatType_32RGBA:
+            pixelFormat = isSRGB ? .rgba8Unorm_srgb : .rgba8Unorm
+        case kCVPixelFormatType_32BGRA:
+            pixelFormat = isSRGB ? .bgra8Unorm_srgb : .bgra8Unorm
+        default:
+            fatalError("Unknown pixel format \(ioSurface.pixelFormat)")
+        }
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat, width: ioSurface.width, height: ioSurface.height, mipmapped: false)
         texture = device.makeTexture(descriptor: descriptor, iosurface: ioSurface, plane: 0)!
         ciImage = .init(ioSurface: ioSurface)
     }
