@@ -20,6 +20,9 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
     let commandQueue: MTLCommandQueue
     var textureCache: CVMetalTextureCache!
     
+    let bufferWidth = 2580
+    let bufferHeight = 2760
+    
     init(instance: XRServerInstance) {
         self.instance = instance
         var rawPort: mach_port_t = .init(MACH_PORT_NULL)
@@ -27,8 +30,8 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
         port = .init(machPort: rawPort, options: [.deallocateReceiveRight])
         precondition(kCVReturnSuccess == CVPixelBufferPoolCreate(nil, nil, [
             kCVPixelBufferPixelFormatTypeKey: kCVPixelFormatType_32BGRA,
-            kCVPixelBufferWidthKey: 2064 * 2,
-            kCVPixelBufferHeightKey: 2208,
+            kCVPixelBufferWidthKey: bufferWidth * 2,
+            kCVPixelBufferHeightKey: bufferHeight,
             kCVPixelBufferMetalCompatibilityKey: true,
             kCVPixelBufferIOSurfacePropertiesKey: [:] as CFDictionary,
         ] as CFDictionary, &pixelBufferPool))
@@ -130,10 +133,10 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                         from: texture,
                         sourceSlice: 0, sourceLevel: 0,
                         sourceOrigin: .init(x: 0, y: 0, z: 0),
-                        sourceSize: .init(width: min(texture.width, 2064), height: min(texture.height, 2208), depth: texture.depth),
+                        sourceSize: .init(width: texture.width, height: texture.height, depth: texture.depth),
                         to: CVMetalTextureGetTexture(cvTexture)!,
                         destinationSlice: 0, destinationLevel: 0,
-                        destinationOrigin: .init(x: 2064 * i, y: 0, z: 0)
+                        destinationOrigin: .init(x: bufferWidth * i, y: 0, z: 0)
                     )
                 }
                 blit.endEncoding()
