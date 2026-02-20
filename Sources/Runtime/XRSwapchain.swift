@@ -31,28 +31,25 @@ class XRSwapchain {
         case .metal(let commandQueue):
             for i in 0..<2 {
                 var metalPixelFormat = MTLPixelFormat(rawValue: .init(createInfo.format))!
-                let ioSurface = IOSurface(properties: [
-                    .width: createInfo.width,
-                    .height: createInfo.height,
-                    .bytesPerElement: 4,
-                    .pixelFormat: metalPixelFormat == .depth32Float ? kCVPixelFormatType_DepthFloat32 : kCVPixelFormatType_32BGRA,
-                    .name: "test",
-                ])!
+                var pixelFormat = kCVPixelFormatType_32BGRA
+                var colorSpace: CFString? // CGColorSpace.*
                 switch metalPixelFormat {
                 case .rgba8Unorm:
                     print("WARNING: converting RGB to BGR")
-                    metalPixelFormat = .bgra8Unorm
+//                    metalPixelFormat = .bgra8Unorm
+                    pixelFormat = kCVPixelFormatType_32RGBA
                     break
                 case .rgba8Unorm_srgb:
                     print("WARNING: converting RGB to BGR")
-                    metalPixelFormat = .bgra8Unorm_srgb
-                    IOSurfaceSetValue(ioSurface, "IOSurfaceColorSpace" as CFString, CGColorSpace.sRGB)
+//                    metalPixelFormat = .bgra8Unorm_srgb
+                    pixelFormat = kCVPixelFormatType_32RGBA
+                    colorSpace = CGColorSpace.sRGB
                     break
                 case .bgra8Unorm:
                     // its ok
                     break
                 case .bgra8Unorm_srgb:
-                    IOSurfaceSetValue(ioSurface, "IOSurfaceColorSpace" as CFString, CGColorSpace.sRGB)
+                    colorSpace = CGColorSpace.sRGB
                     break
                 case .depth32Float:
                     ioSurfaceBackend = false
@@ -60,13 +57,23 @@ class XRSwapchain {
                 default:
                     fatalError() // TODO: return error properly
                 }
-                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: metalPixelFormat, width: ioSurface.width, height: ioSurface.height, mipmapped: false)
+                let descriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: metalPixelFormat, width: .init(createInfo.width), height: .init(createInfo.height), mipmapped: false)
                 descriptor.usage = [
                     .renderTarget,
                 ]
                 descriptor.storageMode = .managed
                 let texture: any MTLTexture
                 if ioSurfaceBackend {
+                    let ioSurface = IOSurface(properties: [
+                        .width: descriptor.width,
+                        .height: descriptor.height,
+                        .bytesPerElement: 4,
+                        .pixelFormat: metalPixelFormat == .depth32Float ? kCVPixelFormatType_DepthFloat32 : kCVPixelFormatType_32BGRA,
+                        .name: "test",
+                    ])!
+                    if let colorSpace {
+                        IOSurfaceSetValue(ioSurface, kIOSurfaceColorSpace, colorSpace)
+                    }
                     ioSurfaces.append(ioSurface)
                     texture = commandQueue.device.makeTexture(
                         descriptor: descriptor,

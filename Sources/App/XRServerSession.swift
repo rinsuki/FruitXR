@@ -7,6 +7,7 @@
 
 import CoreImage
 import OSLog
+import MetalPerformanceShaders
 
 class XRServerSession: NSObject, XRVideoEncoderDelegate {
     static let logger = Logger(subsystem: "net.rinsuki.apps.FruitXR", category: "XRServerSession")
@@ -19,9 +20,11 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
     let ciContext: CIContext
     let commandQueue: MTLCommandQueue
     var textureCache: CVMetalTextureCache!
+    let scale: MPSImageLanczosScale
+    let textures: [MTLTexture]
     
-    let bufferWidth = 2580
-    let bufferHeight = 2760
+    let bufferWidth = 2064
+    let bufferHeight = 2208
     
     init(instance: XRServerInstance) {
         self.instance = instance
@@ -38,6 +41,13 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
         ciContext = .init(mtlDevice: instance.device)
         commandQueue = instance.device.makeCommandQueue()!
         CVMetalTextureCacheCreate(nil, nil, instance.device, nil, &textureCache)
+        scale = .init(device: instance.device)
+        let textureDesc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm_srgb, width: bufferWidth, height: bufferHeight, mipmapped: false)
+        textureDesc.usage = [.shaderWrite]
+        textures = [
+            instance.device.makeTexture(descriptor: textureDesc)!,
+            instance.device.makeTexture(descriptor: textureDesc)!,
+        ]
         super.init()
         commandQueue.label = "XRServerSession:\(self)"
         Self.logger.trace("new instance was made: \(self)")
@@ -111,7 +121,6 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                 let res = CVPixelBufferPoolCreatePixelBuffer(nil, pixelBufferPool!, &pixelBuffer)
                 precondition(res == kCVReturnSuccess)
                 let buffer = commandQueue.makeCommandBuffer()!
-                let blit = buffer.makeBlitCommandEncoder()!
                 var cvTexture: CVMetalTexture!
                 assert(kCVReturnSuccess == CVMetalTextureCacheCreateTextureFromImage(
                     nil, textureCache,
@@ -129,11 +138,28 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                         return
                     }
                     let texture = ioSurface.texture
+                    var transform = MPSScaleTransform(
+                        scaleX: Double(bufferWidth) / Double(texture.width),
+                        scaleY: Double(bufferHeight) / Double(texture.height),
+                        translateX: i == 0 ? 0 : 0.5,
+                        translateY: 0
+                    )
+                    withUnsafePointer(to: &transform) { ptr in
+                        scale.scaleTransform = ptr
+                        scale.encode(
+                            commandBuffer: buffer,
+                            sourceTexture: texture,
+                            destinationTexture: textures[i],
+                        )
+                    }
+                }
+                let blit = buffer.makeBlitCommandEncoder()!
+                for i in 0..<2 {
                     blit.copy(
-                        from: texture,
+                        from: textures[i],
                         sourceSlice: 0, sourceLevel: 0,
                         sourceOrigin: .init(x: 0, y: 0, z: 0),
-                        sourceSize: .init(width: texture.width, height: texture.height, depth: texture.depth),
+                        sourceSize: .init(width: bufferWidth, height: bufferHeight, depth: textures[i].depth),
                         to: CVMetalTextureGetTexture(cvTexture)!,
                         destinationSlice: 0, destinationLevel: 0,
                         destinationOrigin: .init(x: bufferWidth * i, y: 0, z: 0)
