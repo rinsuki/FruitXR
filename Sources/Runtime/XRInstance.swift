@@ -250,7 +250,8 @@ class XRInstance {
         // Validate that the interaction profile is known
         guard let profileDef = knownInteractionProfiles[profilePath] else {
             print("xrSuggestInteractionProfileBindings: unknown interaction profile \(profilePath)")
-            return XR_ERROR_PATH_UNSUPPORTED
+//            return XR_ERROR_PATH_UNSUPPORTED
+            return XR_SUCCESS
         }
         
         var bindings: [SuggestedBinding] = []
