@@ -297,6 +297,11 @@ class XRSession {
         boundsRect = .init(width: 0, height: 0)
         return XR_SUCCESS
     }
+
+    func requestExit() -> XrResult {
+        print("STUB: xrRequestExitSession(\(self))")
+        return XR_SUCCESS
+    }
 }
 
 func xrCreateSession(instance: XrInstance?, createInfo: UnsafePointer<XrSessionCreateInfo>?, sessionPtr: UnsafeMutablePointer<XrSession?>?) -> XrResult {
@@ -503,3 +508,11 @@ func xrGetReferenceSpaceBoundsRect(session: XrSession?, referenceSpaceType: XrRe
     return sessionObj.getReferenceSpaceBoundsRect(referenceSpaceType: referenceSpaceType, boundsRect: &boundsRect!.pointee)
 }
 
+func xrRequestExitSession(session: XrSession?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+    
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.requestExit()
+}
