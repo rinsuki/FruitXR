@@ -494,8 +494,8 @@ class XRSession {
             currentInteractionProfiles[XR_PATH_USER_HAND_LEFT] = oculusTouchPath
             currentInteractionProfiles[XR_PATH_USER_HAND_RIGHT] = oculusTouchPath
             // Queue interaction profile changed event
-            // HACK: hello_xr would require xrEnumerateBoundSourcesForAction and xrGetInputSourceLocalizedName implementation if we passed the event
-            //       so we just skip the event for now, until we implement those functions.
+            // HACK: hello_xr would require xrGetInputSourceLocalizedName implementation if we passed the event
+            //       so we just skip the event for now, until we implement that function.
             // instance.push(event: .interactionProfileChanged(self))
         }
         
@@ -834,8 +834,56 @@ class XRSession {
     }
 
     func enumerateBoundSourcesForAction(enumerateInfo: XrBoundSourcesForActionEnumerateInfo, sourceCountOutput: inout UInt32, sources: UnsafeMutableBufferPointer<XrPath>?) -> XrResult {
-        print("STUB: xrEnumerateBoundSourcesForAction(\(self), \(enumerateInfo), \(sourceCountOutput), \(sources)))")
-        sourceCountOutput = 0
+        let actionObj = Unmanaged<XRAction>.fromOpaque(.init(enumerateInfo.action)).takeUnretainedValue()
+
+        // Must return XR_ERROR_ACTIONSET_NOT_ATTACHED if the action's action set was never attached
+        guard let attachedActionSets, attachedActionSets.contains(where: { $0 === actionObj.actionSet }) else {
+            return XR_ERROR_ACTIONSET_NOT_ATTACHED
+        }
+
+        // Collect all bound source paths for this action across active interaction profiles
+        var boundSourcePaths: [XrPath] = []
+
+        for (profilePath, bindings) in resolvedBindings {
+            // Only consider bindings for profiles that are currently active
+            let isActive = currentInteractionProfiles.values.contains(profilePath)
+            guard isActive else { continue }
+
+            for binding in bindings {
+                guard binding.action === actionObj else { continue }
+
+                // Reconstruct the full source path from top-level user path + component path
+                let topLevelStr = xrRegisteredPaths[Int(binding.topLevelUserPath)]
+                let fullPath = topLevelStr + "/" + binding.componentPath
+
+                // Convert to XrPath (register if not already registered)
+                let pathIndex: XrPath
+                if let existingIndex = xrRegisteredPaths.firstIndex(of: fullPath) {
+                    pathIndex = XrPath(existingIndex)
+                } else {
+                    xrRegisteredPaths.append(fullPath)
+                    pathIndex = XrPath(xrRegisteredPaths.count - 1)
+                }
+
+                // Avoid duplicates
+                if !boundSourcePaths.contains(pathIndex) {
+                    boundSourcePaths.append(pathIndex)
+                }
+            }
+        }
+
+        // Two-call idiom: if sourceCapacityInput is 0, just return the count
+        sourceCountOutput = UInt32(boundSourcePaths.count)
+
+        if let sources, sources.count > 0 {
+            guard sources.count >= boundSourcePaths.count else {
+                return XR_ERROR_SIZE_INSUFFICIENT
+            }
+            for i in 0..<boundSourcePaths.count {
+                sources[i] = boundSourcePaths[i]
+            }
+        }
+
         return XR_SUCCESS
     }
 }
