@@ -26,7 +26,7 @@ class XRSwapchain {
         port = 0
         remoteId = 0
         assert(FI_C_SwapchainCreate(session.port, &port, &remoteId) == KERN_SUCCESS)
-        
+
         switch session.graphicsAPI {
         case .metal(let commandQueue):
             for i in 0..<2 {
