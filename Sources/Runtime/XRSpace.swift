@@ -25,12 +25,24 @@ class XRSpace {
     func destroy() {
         destroyed = true
     }
-    
-    func locate(baseSpace: XRSpace?, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
-        print("STUB: XRSpace.locate(self=\(self), base=\(baseSpace), \(time), \(spaceLocation))")
+
+    /// Returns the world-space pose of this space, or nil if unlocatable.
+    func getWorldPose() -> XrPosef? {
+        return nil
+    }
+
+    func locate(baseSpace: XRSpace, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
+        guard let spaceWorldPose = getWorldPose(),
+              let baseWorldPose = baseSpace.getWorldPose() else {
+            // At least one space is unlocatable
+            spaceLocation.locationFlags = 0
+            spaceLocation.pose = .identity
+            return XR_SUCCESS
+        }
+
+        let relativePose = baseWorldPose.inverse.composed(with: spaceWorldPose)
         spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-        spaceLocation.pose.position = .init(x: 0, y: 0, z: 0)
-        spaceLocation.pose.orientation = .init(x: 0, y: 0, z: 0, w: 1)
+        spaceLocation.pose = relativePose
         return XR_SUCCESS
     }
 }
@@ -49,7 +61,13 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
         return "XRActionSpace(action=\(action))"
     }
 
-    override func locate(baseSpace: XRSpace?, time: XrTime, spaceLocation: inout XrSpaceLocation) -> XrResult {
+    override func getWorldPose() -> XrPosef? {
+        // Per spec: action spaces are unlocatable unless the action set was active in the most recent xrSyncActions
+        let isActionSetActive = session.activeActionSets.contains(where: { $0.actionSet === action.actionSet })
+        guard isActionSetActive else {
+            return nil
+        }
+
         // Determine which top-level user path(s) to use for this space.
         // If subpath is specified, use that. Otherwise, find any binding for this action.
         let topLevelPaths: [XrPath]
@@ -69,7 +87,7 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
             }
             topLevelPaths = foundPaths
         }
-        
+
         // Find the first active binding for a pose input
         for path in topLevelPaths {
             let controller: IPCHandController
@@ -81,7 +99,7 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
             default:
                 continue
             }
-            
+
             // Check if there's a resolved binding for this action on this hand
             var hasPoseBinding = false
             var useGrip = false
@@ -95,23 +113,16 @@ class XRActionSpace: XRSpace, CustomStringConvertible {
                     }
                 }
             }
-            
+
             if hasPoseBinding {
-                spaceLocation.locationFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT | XR_SPACE_LOCATION_POSITION_TRACKED_BIT | XR_SPACE_LOCATION_ORIENTATION_TRACKED_BIT
-                if useGrip {
-                    spaceLocation.pose.set(from: controller.gripTransform)
-                } else {
-                    // Default to aim/pointer pose
-                    spaceLocation.pose.set(from: controller.pointerTransform)
-                }
-                return XR_SUCCESS
+                let transform = useGrip ? controller.gripTransform : controller.pointerTransform
+                let controllerWorldPose = XrPosef(from: transform)
+                return controllerWorldPose.composed(with: pose)
             }
         }
-        
-        // No matching binding found
-        spaceLocation.locationFlags = 0
-        // TODO: care about baseSpace and pose
-        return XR_SUCCESS
+
+        // No matching binding found — unlocatable
+        return nil
     }
 }
 
@@ -139,6 +150,12 @@ func xrCreateActionSpace(session: XrSession?, createInfo: UnsafePointer<XrAction
 }
 
 class XRReferenceSpace: XRSpace, CustomStringConvertible {
+    static let supportedTypes: [XrReferenceSpaceType] = [
+        XR_REFERENCE_SPACE_TYPE_LOCAL,
+        XR_REFERENCE_SPACE_TYPE_VIEW,
+        XR_REFERENCE_SPACE_TYPE_STAGE,
+    ]
+
     let referenceSpaceType: XrReferenceSpaceType
     
     init(session: XRSession, pose: XrPosef, referenceSpaceType: XrReferenceSpaceType) {
@@ -149,6 +166,22 @@ class XRReferenceSpace: XRSpace, CustomStringConvertible {
     var description: String {
         return "XRReferenceSpace(type=\(referenceSpaceType), pose=\(pose))"
     }
+
+    override func getWorldPose() -> XrPosef? {
+        switch referenceSpaceType {
+        case XR_REFERENCE_SPACE_TYPE_LOCAL, XR_REFERENCE_SPACE_TYPE_STAGE:
+            // LOCAL/STAGE natural origin is the world origin.
+            // The created space's world pose is just poseInReferenceSpace.
+            return pose
+        case XR_REFERENCE_SPACE_TYPE_VIEW:
+            // VIEW natural origin tracks the HMD.
+            // The created space's world pose = hmdWorldPose * poseInReferenceSpace.
+            let hmdPose = XrPosef(from: session.currentHeadsetInfo.hmd)
+            return hmdPose.composed(with: pose)
+        default:
+            return nil
+        }
+    }
 }
 
 func xrCreateReferenceSpace(session: XrSession?, createInfo: UnsafePointer<XrReferenceSpaceCreateInfo>?, spacePtr: UnsafeMutablePointer<XrSpace?>?) -> XrResult {
@@ -157,7 +190,14 @@ func xrCreateReferenceSpace(session: XrSession?, createInfo: UnsafePointer<XrRef
     }
     
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
-    let space = XRReferenceSpace(session: sessionObj, pose: createInfo!.pointee.poseInReferenceSpace, referenceSpaceType: createInfo!.pointee.referenceSpaceType)
+    let refType = createInfo!.pointee.referenceSpaceType
+
+    // Per spec: must return XR_ERROR_REFERENCE_SPACE_UNSUPPORTED if the type is not supported
+    guard XRReferenceSpace.supportedTypes.contains(refType) else {
+        return XR_ERROR_REFERENCE_SPACE_UNSUPPORTED
+    }
+
+    let space = XRReferenceSpace(session: sessionObj, pose: createInfo!.pointee.poseInReferenceSpace, referenceSpaceType: refType)
     let ptr = Unmanaged.passRetained(space).toOpaque()
     spacePtr!.pointee = OpaquePointer(ptr)
     
@@ -170,7 +210,7 @@ func xrDestroySpace(space: XrSpace?) -> XrResult {
     }
 
     autoreleasepool {
-        let spaceObj = Unmanaged<XRSpace>.fromOpaque(.init(space)).takeUnretainedValue()
+        let spaceObj = Unmanaged<XRSpace>.fromOpaque(.init(space)).takeRetainedValue()
         spaceObj.destroy()
     }
     
@@ -181,14 +221,15 @@ func xrLocateSpace(space: XrSpace?, baseSpace: XrSpace?, time: XrTime, spaceLoca
     guard let space else {
         return XR_ERROR_HANDLE_INVALID
     }
+    guard let baseSpace else {
+        return XR_ERROR_HANDLE_INVALID
+    }
     
     let spaceObj = Unmanaged<XRSpace>.fromOpaque(.init(space)).takeUnretainedValue()
-    let baseSpaceObj: XRSpace?
-    if let baseSpace {
-        baseSpaceObj = Unmanaged<XRSpace>.fromOpaque(.init(baseSpace)).takeUnretainedValue()
-    } else {
-        baseSpaceObj = nil
-    }
+    let baseSpaceObj = Unmanaged<XRSpace>.fromOpaque(.init(baseSpace)).takeUnretainedValue()
+
+    // Refresh tracking data for accurate poses
+    FI_C_SessionGetCurrentInfo(spaceObj.session.port, &spaceObj.session.currentHeadsetInfo)
 
     return spaceObj.locate(baseSpace: baseSpaceObj, time: time, spaceLocation: &spaceLocation!.pointee)
 }

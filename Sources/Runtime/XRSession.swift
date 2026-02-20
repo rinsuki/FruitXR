@@ -130,10 +130,7 @@ class XRSession {
     }
     
     func enumerateReferenceSpaces(spaces: UnsafeMutableBufferPointer<XrReferenceSpaceType>, spaceCount: inout UInt32) -> XrResult {
-        let ourSupportedSpaces = [
-            XR_REFERENCE_SPACE_TYPE_LOCAL,
-            XR_REFERENCE_SPACE_TYPE_VIEW,
-        ]
+        let ourSupportedSpaces = XRReferenceSpace.supportedTypes
         
         if spaces.count < ourSupportedSpaces.count {
             spaceCount = .init(ourSupportedSpaces.count)
