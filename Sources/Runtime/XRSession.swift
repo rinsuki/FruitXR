@@ -91,6 +91,7 @@ class XRSession {
         case XR_TYPE_GRAPHICS_BINDING_METAL_KHR:
             let next = createInfo.next.bindMemory(to: XrGraphicsBindingMetalKHR.self, capacity: 1).pointee
             let commandQueue = Unmanaged<MTLCommandQueue>.fromOpaque(.init(next.commandQueue)).takeUnretainedValue()
+            commandQueue.label = (commandQueue.label ?? "") + " (Attached to FruitXR XrSession \(self))"
             graphicsAPI = GraphicsAPI.metal(commandQueue: commandQueue)
             break
         default:
