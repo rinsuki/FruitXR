@@ -302,6 +302,12 @@ class XRSession {
         print("STUB: xrRequestExitSession(\(self))")
         return XR_SUCCESS
     }
+
+    func enumerateBoundSourcesForAction(enumerateInfo: XrBoundSourcesForActionEnumerateInfo, sourceCountOutput: inout UInt32, sources: UnsafeMutableBufferPointer<XrPath>?) -> XrResult {
+        print("STUB: xrEnumerateBoundSourcesForAction(\(self), \(enumerateInfo), \(sourceCountOutput), \(sources)))")
+        sourceCountOutput = 0
+        return XR_SUCCESS
+    }
 }
 
 func xrCreateSession(instance: XrInstance?, createInfo: UnsafePointer<XrSessionCreateInfo>?, sessionPtr: UnsafeMutablePointer<XrSession?>?) -> XrResult {
@@ -515,4 +521,13 @@ func xrRequestExitSession(session: XrSession?) -> XrResult {
     
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
     return sessionObj.requestExit()
+}
+
+func xrEnumerateBoundSourcesForAction(session: XrSession?, enumerateInfo: UnsafePointer<XrBoundSourcesForActionEnumerateInfo>?, sourceCapacityInput: UInt32, sourceCountOutput: UnsafeMutablePointer<UInt32>?, sources: UnsafeMutablePointer<XrPath>?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+    return sessionObj.enumerateBoundSourcesForAction(enumerateInfo: enumerateInfo!.pointee, sourceCountOutput: &sourceCountOutput!.pointee, sources: .init(start: sources, count: .init(sourceCapacityInput)))
 }
