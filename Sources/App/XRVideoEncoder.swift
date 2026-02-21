@@ -46,6 +46,7 @@ class XRVideoEncoder {
                 }
             }, refcon: Unmanaged.passUnretained(self).toOpaque(), compressionSessionOut: &session)
             assert(createRes == noErr)
+            VTSessionSetProperty(session!, key: kVTCompressionPropertyKey_MaxFrameDelayCount, value: 0 as CFNumber)
             VTSessionSetProperty(session!, key: kVTCompressionPropertyKey_ProfileLevel, value: kVTProfileLevel_HEVC_Main_AutoLevel)
             VTSessionSetProperty(session!, key: kVTCompressionPropertyKey_ConstantBitRate, value: 20_000_000 as CFNumber)
             VTSessionSetProperty(session!, key: kVTCompressionPropertyKey_ExpectedFrameRate, value: 120 as CFNumber)
