@@ -69,6 +69,8 @@ let knownInteractionProfiles: [String: InteractionProfileDefinition] = [
     "/interaction_profiles/oculus/touch_controller": oculusTouchProfile,
 ]
 
+let mtlDevice = MTLCreateSystemDefaultDevice()
+
 class XRInstance {
     enum Event {
         case stateChanged(XRSession, XrSessionState)
@@ -104,11 +106,16 @@ class XRInstance {
         self.port = .init(machPort: port, options: [.deallocateSendRight, .deallocateReceiveRight])
         // TODO: We need to ask the server for the which GPU should be used for rendering
         // (btw, since we will only support the Apple Silicon Mac, they will likely have a only one GPU, unless Apple will support dGPU for Mac Pro or eGPU)
-        device = MTLCreateSystemDefaultDevice()!
+        guard let device = mtlDevice else {
+            print("ERR: GPU not found")
+            throw XRError(result: XR_ERROR_INITIALIZATION_FAILED)
+        }
+        self.device = device
     }
     
     deinit {
         precondition(destroyed)
+        destroyed = false
     }
     
     func destroy() {
