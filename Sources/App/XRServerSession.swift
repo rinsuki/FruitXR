@@ -127,6 +127,14 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                     pixelBuffer!, nil, .bgra8Unorm, CVPixelBufferGetWidth(pixelBuffer!), CVPixelBufferGetHeight(pixelBuffer!),
                     0, &cvTexture
                 ))
+                // HACK: if the width is wider than height, we assume apps are using multiview so just take first swapchain and split the image
+                let firstIoSurface = XRServer.shared.swapchainsById[eyes[0].swapchain_id]?.lastActiveSurface?.ioSurface
+                let isMultiView: Bool
+                if let firstIoSurface {
+                    isMultiView = firstIoSurface.width > firstIoSurface.height
+                } else {
+                    isMultiView = false
+                }
                 for i in 0..<2 {
                     let swapchainId = eyes[i].swapchain_id
                     guard let swapchain = XRServer.shared.swapchainsById[swapchainId] else {
@@ -139,9 +147,9 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                     }
                     let texture = ioSurface.texture
                     var transform = MPSScaleTransform(
-                        scaleX: Double(bufferWidth) / Double(texture.width),
+                        scaleX: Double(bufferWidth) / Double(isMultiView ? texture.width / 2 : texture.width),
                         scaleY: Double(bufferHeight) / Double(texture.height),
-                        translateX: i == 0 ? 0 : 0.5,
+                        translateX: isMultiView ? -Double(bufferWidth * i) : 0,
                         translateY: 0
                     )
                     withUnsafePointer(to: &transform) { ptr in
