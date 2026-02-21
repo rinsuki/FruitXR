@@ -700,7 +700,7 @@ class XRSession {
         return nil
     }
     
-    func waitFrame(waitInfo: XrFrameWaitInfo, frameState: inout XrFrameState) -> XrResult {
+    func waitFrame(waitInfo: XrFrameWaitInfo?, frameState: inout XrFrameState) -> XrResult {
         print("STUB: xrWaitFrame(\(self), \(waitInfo), \(frameState))") 
         // TODO: these are stub
         // frameState.predictedDisplayTime = .init(clock_gettime_nsec_np(CLOCK_UPTIME_RAW))
@@ -1036,7 +1036,7 @@ func xrWaitFrame(session: XrSession?, waitInfo: UnsafePointer<XrFrameWaitInfo>?,
     
     
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
-    return sessionObj.waitFrame(waitInfo: waitInfo!.pointee, frameState: &frameState!.pointee)
+    return sessionObj.waitFrame(waitInfo: waitInfo?.pointee, frameState: &frameState!.pointee)
 }
 
 func xrBeginFrame(session: XrSession?, frameBeginInfo: UnsafePointer<XrFrameBeginInfo>?) -> XrResult {
