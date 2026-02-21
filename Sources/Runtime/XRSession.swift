@@ -709,7 +709,7 @@ class XRSession {
         return XR_SUCCESS
     }
     
-    func beginFrame(frameBeginInfo: XrFrameBeginInfo) -> XrResult {
+    func beginFrame(frameBeginInfo: XrFrameBeginInfo?) -> XrResult {
         print("STUB: xrBeginFrame(\(self), \(frameBeginInfo))")
         return XR_SUCCESS
     }
@@ -1045,7 +1045,7 @@ func xrBeginFrame(session: XrSession?, frameBeginInfo: UnsafePointer<XrFrameBegi
     }
     
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
-    return sessionObj.beginFrame(frameBeginInfo: frameBeginInfo!.pointee)
+    return sessionObj.beginFrame(frameBeginInfo: frameBeginInfo?.pointee)
 }
 
 func xrEndFrame(session: XrSession?, frameEndInfo: UnsafePointer<XrFrameEndInfo>?) -> XrResult {
