@@ -494,9 +494,7 @@ class XRSession {
             currentInteractionProfiles[XR_PATH_USER_HAND_LEFT] = oculusTouchPath
             currentInteractionProfiles[XR_PATH_USER_HAND_RIGHT] = oculusTouchPath
             // Queue interaction profile changed event
-            // HACK: hello_xr would require xrGetInputSourceLocalizedName implementation if we passed the event
-            //       so we just skip the event for now, until we implement that function.
-            // instance.push(event: .interactionProfileChanged(self))
+            instance.push(event: .interactionProfileChanged(self))
         }
         
         return XR_SUCCESS
