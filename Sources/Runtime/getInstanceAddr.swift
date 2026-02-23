@@ -270,6 +270,11 @@ func getInstanceProcAddr(instance: XrInstance?, name: UnsafePointer<Int8>?, func
             xrEnumerateBoundSourcesForAction as PFN_xrEnumerateBoundSourcesForAction,
             to: PFN_xrVoidFunction.self
         )
+    case "xrGetInputSourceLocalizedName":
+        functionPtr.pointee = unsafeBitCast(
+            xrGetInputSourceLocalizedName as PFN_xrGetInputSourceLocalizedName,
+            to: PFN_xrVoidFunction.self
+        )
     // -- METAL --
     // X2 is for Unity's WIP OpenXR macOS plugin (com.unity.xr.openxr@1.14.2)
     // It seems completely same as XR_KHR_metal_enable except for name of extension and function

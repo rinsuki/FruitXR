@@ -886,6 +886,26 @@ class XRSession {
 
         return XR_SUCCESS
     }
+
+    func getInputSourceLocalizedName(info: XrInputSourceLocalizedNameGetInfo, bufferCountOutput: inout UInt32, buffer: UnsafeMutableBufferPointer<CChar>) -> XrResult {
+        print("STUB: xrGetInputSourceLocalizedName(\(self), \(xrRegisteredPaths[Int(info.sourcePath)]))")
+
+        let name = xrRegisteredPaths[Int(info.sourcePath)]
+        let nameData: ContiguousArray<CChar> = name.utf8CString
+
+        bufferCountOutput = UInt32(nameData.count)
+        if buffer.count == 0 {
+            return XR_SUCCESS
+        }
+        if buffer.count < bufferCountOutput {
+            return XR_ERROR_SIZE_INSUFFICIENT
+        }
+
+        _ = nameData.withUnsafeBytes { src in
+            memcpy(buffer.baseAddress!, src.baseAddress!, .init(bufferCountOutput))
+        }
+        return XR_SUCCESS
+    }
 }
 
 func xrCreateSession(instance: XrInstance?, createInfo: UnsafePointer<XrSessionCreateInfo>?, sessionPtr: UnsafeMutablePointer<XrSession?>?) -> XrResult {
@@ -1119,4 +1139,14 @@ func xrEnumerateBoundSourcesForAction(session: XrSession?, enumerateInfo: Unsafe
 
     let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
     return sessionObj.enumerateBoundSourcesForAction(enumerateInfo: enumerateInfo!.pointee, sourceCountOutput: &sourceCountOutput!.pointee, sources: .init(start: sources, count: .init(sourceCapacityInput)))
+}
+
+func xrGetInputSourceLocalizedName(session: XrSession?, getInfo: UnsafePointer<XrInputSourceLocalizedNameGetInfo>?, bufferCapacityInput: UInt32, bufferCountOutput: UnsafeMutablePointer<UInt32>?, buffer: UnsafeMutablePointer<CChar>?) -> XrResult {
+    guard let session else {
+        return XR_ERROR_HANDLE_INVALID
+    }
+
+    let sessionObj = Unmanaged<XRSession>.fromOpaque(.init(session)).takeUnretainedValue()
+
+    return sessionObj.getInputSourceLocalizedName(info: getInfo!.pointee, bufferCountOutput: &bufferCountOutput!.pointee, buffer: .init(start: buffer, count: .init(bufferCapacityInput)))
 }
