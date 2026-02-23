@@ -54,6 +54,7 @@ typedef struct {
 } IPCHandController;
 
 typedef struct {
+    uint32_t updatedCount;
     IPCTransform hmd;
     IPCTransform leftEye;
     IPCTransform rightEye;
@@ -64,5 +65,5 @@ typedef struct {
 // Transform = 7
 // Controller = Transform*2 + 5 = 19
 // 7*3 = 21
-// 21 + 19*2 = 59
-_Static_assert(sizeof(IPCCurrentHeadsetInfo) == (sizeof(float) * 59), "IPCCurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");
+// 21 + 19*2 = 59 (+1 for updatedCount)
+_Static_assert(sizeof(IPCCurrentHeadsetInfo) == (sizeof(float) * 60), "IPCCurrentHeadsetInfo size SHOULD matched with FruitXR_IPC.defs");

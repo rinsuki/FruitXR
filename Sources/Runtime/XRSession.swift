@@ -76,6 +76,21 @@ class XRSession {
         self.instance = instance
         self.graphicsAPI = graphicsAPI
         self.port = port
+
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            var info: IPCCurrentHeadsetInfo = .init()
+            while let self, self.destroyed == false {
+                guard FI_C_SessionGetCurrentInfo(self.port, &info) == KERN_SUCCESS else {
+                    break
+                }
+                if info.updatedCount < 5 {
+                    sleep(1)
+                    continue
+                }
+                self.instance.push(event: .stateChanged(self, XR_SESSION_STATE_READY))
+                break
+            }
+        }
     }
     
     static func create(instance: XRInstance, createInfo: XrSessionCreateInfo) -> XRResult<XRSession> {
@@ -112,7 +127,6 @@ class XRSession {
         }
         
         let session = XRSession(instance: instance, graphicsAPI: graphicsAPI, port: port)
-        instance.push(event: .stateChanged(session, XR_SESSION_STATE_READY))
         return .success(session)
     }
     

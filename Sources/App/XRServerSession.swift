@@ -81,6 +81,7 @@ class XRServerSession: NSObject, XRVideoEncoderDelegate {
                     // TODO
                     break
                 case .currentPosition(let cp):
+                    currentInfo.updatedCount += 1
                     currentInfo.hmd.set(from: cp.hmd)
                     currentInfo.leftEye.set(from: cp.leftEye)
                     currentInfo.rightEye.set(from: cp.rightEye)

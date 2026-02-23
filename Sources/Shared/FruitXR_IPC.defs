@@ -28,7 +28,7 @@ routine EndFrame(
     info : IPCEndFrameInfo
 );
 
-type IPCCurrentHeadsetInfo = struct [59] of float;
+type IPCCurrentHeadsetInfo = struct [60] of float;
 
 routine SessionGetCurrentInfo(
     session_port: mach_port_t;
